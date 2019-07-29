@@ -1,0 +1,37 @@
+swarm:
+  deployment:
+    jaas-basic.war:
+      web:
+        login-config:
+          auth-method: BASIC
+          security-domain: my-domain
+        security-constraints:
+          - url-pattern: /*
+            methods: [GET, POST, PUT, DELETE]
+            roles: [admin]
+          - url-pattern: /*
+            methods: [GET]
+            roles: [user]
+  security:
+    security-domains:
+      my-domain:
+        classic-authentication:
+          login-modules:
+            Database:
+              code: Database
+              flag: required
+              module-options:
+                dsJndiName: java:jboss/datasources/projdb
+                principalsQuery: SELECT PASSWORD FROM USERS WHERE USERNAME=?
+                rolesQuery: SELECT ROLE, 'Roles' FROM USERS WHERE USERNAME=?
+  datasources:
+    jdbc-drivers:
+      com.mysql:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        driver-module-name: com.mysql
+    data-sources:
+      projdb:
+        driver-name: com.mysql
+        connection-url: jdbc:mysql://localhost:3306/PROJDB
+        user-name: root
+        password: root
