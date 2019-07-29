@@ -1,7 +1,6 @@
 package com.sumerge.program.entities.group;
 
 import com.sumerge.program.entities.user.User;
-import com.sumerge.program.rest.UserResource;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
