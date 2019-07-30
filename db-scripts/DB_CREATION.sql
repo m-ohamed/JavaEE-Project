@@ -32,3 +32,10 @@ INSERT INTO projdb.workgroups ( OWNER_UID, GROUP_NAME)
 VALUES (1, 'default_group');
 INSERT INTO projdb.GROUPMEMBER (GID, UID)
 VALUES (2, 1);
+
+CREATE TABLE projdb.AUDITLOG (
+                                    ACTION_NAME varchar(50),
+                                    ACTION_TIME datetime,
+                                    ACTION_AUTHOR varchar(50),
+                                    ENTITY_DETAILS varchar(1000)
+);

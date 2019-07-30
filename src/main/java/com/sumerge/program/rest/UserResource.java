@@ -19,6 +19,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path("user")
 public class UserResource
 {
+	private static final Logger LOGGER = Logger.getLogger(UserResource.class.getName());
+
 	@Context
 	private SecurityContext securityContext;
 
@@ -86,8 +88,11 @@ public class UserResource
 		{
 			userManager = new UserManager();
 
-			if(!securityContext.isUserInRole("admin") && username != securityContext.getUserPrincipal().toString())
+			if(!securityContext.isUserInRole("admin") && !username.equalsIgnoreCase(securityContext.getUserPrincipal().toString()))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You do not have permissions to do this action.").build();
+
+			if(username == "admin")
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not edit the default administrator.").build();
 
 			if(firstName != null)
 				userManager.updateUserFirstName(username, firstName);
@@ -118,6 +123,9 @@ public class UserResource
 	{
 		try
 		{
+			if(username == "admin" && oldGroupId == 1)
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not move the default administrator from the default group.").build();
+
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
@@ -162,6 +170,9 @@ public class UserResource
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
+			if(username == "admin")
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not remove the default administrator.").build();
+
 			userManager = new UserManager();
 			userManager.removeUser(username, groupId);
 
@@ -201,6 +212,9 @@ public class UserResource
 		{
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
+			if(userId == 1)
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();
 
 			userManager = new UserManager();
 			User user = userManager.getUserById(userId, true);
