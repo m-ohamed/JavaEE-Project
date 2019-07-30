@@ -59,58 +59,63 @@ public class UserManager
             return em.createNamedQuery("User.findAll", User.class).getResultList();
     }
 
-    public User getUserById(int userId)
+    public User getUserById(int userId, boolean isAdmin)
     {
         EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-        try {
-            User user = em.find(User.class, userId);
-            em.getTransaction().commit();
-            return user;
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
 
-        return new User();
+        if(isAdmin)
+            return em.createNamedQuery("User.get", User.class).setParameter("userId",userId).getSingleResult();
+        else
+            return em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
+
     }
 
-    public void updateUserFirstName(int userId, String firstName)
+    public User getUserByUsername(String username, boolean isAdmin)
+    {
+        EntityManager em = emf.createEntityManager();
+
+        if(isAdmin)
+            return em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
+        else
+            return em.createNamedQuery("User.UsernameFind", User.class).setParameter("username",username).getSingleResult();
+
+    }
+
+    public void updateUserFirstName(String username, String firstName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         user.setFirstName(firstName);
         em.merge(user);
         em.getTransaction().commit();
     }
 
-    public void updateUserLastName(int userId, String lastName)
+    public void updateUserLastName(String username, String lastName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         user.setLastName(lastName);
         em.merge(user);
         em.getTransaction().commit();
     }
 
-    public void updateUserEmail(int userId, String email)
+    public void updateUserEmail(String username, String email)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         user.setEmail(email);
         em.merge(user);
         em.getTransaction().commit();
     }
 
-    public void updateUserPassword(int userId, String currentPassword, String newPassword)
+    public void updateUserPassword(String username, String currentPassword, String newPassword)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
 
         Optional<String> currentHashedPassword = hashPassword(currentPassword);
         Optional<String> newHashedPassword = hashPassword(newPassword);
@@ -124,24 +129,24 @@ public class UserManager
         em.getTransaction().commit();
     }
 
-    public void updateUserRole(int userId, String role)
+    public void updateUserRole(String username, String role)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         user.setRole(role);
 
         em.merge(user);
         em.getTransaction().commit();
     }
 
-    public void moveUser(int userId, int oldGroupId, int newGroupId)
+    public void moveUser(String username, int oldGroupId, int newGroupId)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         Group oldGroup =  groupManager.getGroupById(oldGroupId);
         Group newGroup = groupManager.getGroupById(newGroupId);
 
@@ -154,13 +159,13 @@ public class UserManager
         em.getTransaction().commit();
     }
 
-    public void addUser(int userId, int groupId)
+    public void addUser(String username, int groupId)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username, false);
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().add(group);
@@ -169,13 +174,13 @@ public class UserManager
         em.getTransaction().commit();
     }
 
-    public void removeUser(int userId, int groupId)
+    public void removeUser(String username, int groupId)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserById(userId);
+        User user = getUserByUsername(username,false);
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().remove(group);
@@ -188,7 +193,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId);
+        User user = getUserById(userId,false);
         if(flag == 1)
             user.setDeleted(true);
         else

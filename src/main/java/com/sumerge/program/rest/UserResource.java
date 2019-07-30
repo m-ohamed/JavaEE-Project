@@ -64,7 +64,7 @@ public class UserResource
 		try
 		{
 			userManager = new UserManager();
-			User user = userManager.getUserById(userId);
+			User user = userManager.getUserById(userId, securityContext.isUserInRole("admin"));
 
 			return Response.ok().entity(user.toString()).build();
 		}
@@ -77,7 +77,7 @@ public class UserResource
 
 	@PUT
 	@Path("update")
-	public Response updateUser(@QueryParam("userId")int userId, @QueryParam("firstName") String firstName,
+	public Response updateUser(@QueryParam("username")String username, @QueryParam("firstName") String firstName,
 							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
 							   @QueryParam("currentPassword") String currentPassword,
 							   @QueryParam("newPassword") String newPassword, @QueryParam("role") String role)
@@ -87,19 +87,19 @@ public class UserResource
 			userManager = new UserManager();
 
 			if(firstName != null)
-				userManager.updateUserFirstName(userId, firstName);
+				userManager.updateUserFirstName(username, firstName);
 
 			if(lastName != null)
-				userManager.updateUserLastName(userId, lastName);
+				userManager.updateUserLastName(username, lastName);
 
 			if(email != null)
-				userManager.updateUserEmail(userId, email);
+				userManager.updateUserEmail(username, email);
 
 			if(currentPassword != null && newPassword != null)
-				userManager.updateUserPassword(userId, currentPassword, newPassword);
+				userManager.updateUserPassword(username, currentPassword, newPassword);
 
 			if(role != null)
-				userManager.updateUserRole(userId, role);
+				userManager.updateUserRole(username, role);
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -111,12 +111,12 @@ public class UserResource
 
 	@PUT
 	@Path("move")
-	public Response moveUser(@QueryParam("userId") int userId, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
+	public Response moveUser(@QueryParam("username") String username, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
 	{
 		try
 		{
 			userManager = new UserManager();
-			userManager.moveUser(userId, oldGroupId, newGroupId);
+			userManager.moveUser(username, oldGroupId, newGroupId);
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -128,12 +128,12 @@ public class UserResource
 
 	@PUT
 	@Path("addUser")
-	public Response addUser(@QueryParam("userId") int userId, @QueryParam("groupId")int groupId)
+	public Response addUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
 		try
 		{
 			userManager = new UserManager();
-			userManager.addUser(userId, groupId);
+			userManager.addUser(username, groupId);
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -145,12 +145,12 @@ public class UserResource
 
 	@DELETE
 	@Path("removeUser")
-	public Response removeUser(@QueryParam("userId") int userId, @QueryParam("groupId")int groupId)
+	public Response removeUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
 		try
 		{
 			userManager = new UserManager();
-			userManager.removeUser(userId, groupId);
+			userManager.removeUser(username, groupId);
 
 			return Response.ok().entity(userManager).build();
 		}

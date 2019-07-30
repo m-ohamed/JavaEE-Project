@@ -11,7 +11,11 @@ import java.util.List;
 @Table(name = "users")
 @NamedQueries({
         @NamedQuery(name = "User.findAll", query = "SELECT e.username, e.firstName, e.lastName, e.email FROM User e WHERE e.isDeleted = false"),
-        @NamedQuery(name = "User.getAll", query = "SELECT e FROM User e")
+        @NamedQuery(name = "User.getAll", query = "SELECT e FROM User e"),
+        @NamedQuery(name = "User.find", query = "SELECT e.username, e.firstName, e.lastName, e.email from User e WHERE e.userId = :userId"),
+        @NamedQuery(name = "User.get", query = "SELECT e from User e WHERE e.userId = :userId"),
+        @NamedQuery(name = "User.UsernameFind", query = "SELECT e.username, e.firstName, e.lastName, e.email from User e WHERE e.username = :username"),
+        @NamedQuery(name = "User.UsernameGet", query = "SELECT e from User e WHERE e.username = :username")
 })
 public class User implements Serializable
 {
