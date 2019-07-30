@@ -7,15 +7,21 @@ import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("user")
 @RequestScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Path("user")
 public class UserResource
 {
+	@Context
+	private SecurityContext securityContext;
+
 	@EJB
 	private UserManager userManager;
 
@@ -27,8 +33,12 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
-			userManager.createUser(username, firstName, lastName, email, password, role, false);
+			userManager.createUser(username, firstName, lastName, email, password, role);
+
 			return Response.ok().entity(userManager).build();
 		}
 		catch (Exception e)
@@ -38,20 +48,29 @@ public class UserResource
 	}
 
 	@GET
+	@Path("getAll")
+	public Response getUsers()
+	{
+		userManager = new UserManager();
+		boolean isAdmin = securityContext.isUserInRole("admin");
+
+		return Response.ok().entity(userManager.getAllUsers(isAdmin)).build();
+	}
+
+	@GET
 	@Path("find/{userId}")
 	public Response getUser(@PathParam("userId") int userId)
 	{
 		try
 		{
-			System.out.println("in rest endpoint");
 			userManager = new UserManager();
 			User user = userManager.getUserById(userId);
-			System.out.println("got user: " + user.getUsername());
 
 			return Response.ok().entity(user.toString()).build();
 		}
 		catch(Exception e)
 		{
+			System.out.println(e.getStackTrace());
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -81,6 +100,57 @@ public class UserResource
 
 			if(role != null)
 				userManager.updateUserRole(userId, role);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@PUT
+	@Path("move")
+	public Response moveUser(@QueryParam("userId") int userId, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
+	{
+		try
+		{
+			userManager = new UserManager();
+			userManager.moveUser(userId, oldGroupId, newGroupId);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@PUT
+	@Path("addUser")
+	public Response addUser(@QueryParam("userId") int userId, @QueryParam("groupId")int groupId)
+	{
+		try
+		{
+			userManager = new UserManager();
+			userManager.addUser(userId, groupId);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@DELETE
+	@Path("removeUser")
+	public Response removeUser(@QueryParam("userId") int userId, @QueryParam("groupId")int groupId)
+	{
+		try
+		{
+			userManager = new UserManager();
+			userManager.removeUser(userId, groupId);
 
 			return Response.ok().entity(userManager).build();
 		}
