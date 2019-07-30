@@ -7,15 +7,21 @@ import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
-@Path("user")
 @RequestScoped
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
+@Path("user")
 public class UserResource
 {
+	@Context
+	private SecurityContext securityContext;
+
 	@EJB
 	private UserManager userManager;
 
@@ -27,8 +33,12 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
-			userManager.createUser(username, firstName, lastName, email, password, role, false);
+			userManager.createUser(username, firstName, lastName, email, password, role);
+
 			return Response.ok().entity(userManager).build();
 		}
 		catch (Exception e)
@@ -38,27 +48,36 @@ public class UserResource
 	}
 
 	@GET
+	@Path("getAll")
+	public Response getUsers()
+	{
+		userManager = new UserManager();
+		boolean isAdmin = securityContext.isUserInRole("admin");
+
+		return Response.ok().entity(userManager.getAllUsers(isAdmin)).build();
+	}
+
+	@GET
 	@Path("find/{userId}")
 	public Response getUser(@PathParam("userId") int userId)
 	{
 		try
 		{
-			System.out.println("in rest endpoint");
 			userManager = new UserManager();
-			User user = userManager.getUserById(userId);
-			System.out.println("got user: " + user.getUsername());
+			User user = userManager.getUserById(userId, securityContext.isUserInRole("admin"));
 
 			return Response.ok().entity(user.toString()).build();
 		}
 		catch(Exception e)
 		{
+			System.out.println(e.getStackTrace());
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
 
 	@PUT
 	@Path("update")
-	public Response updateUser(@QueryParam("userId")int userId, @QueryParam("firstName") String firstName,
+	public Response updateUser(@QueryParam("username")String username, @QueryParam("firstName") String firstName,
 							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
 							   @QueryParam("currentPassword") String currentPassword,
 							   @QueryParam("newPassword") String newPassword, @QueryParam("role") String role)
@@ -67,20 +86,84 @@ public class UserResource
 		{
 			userManager = new UserManager();
 
+			if(!securityContext.isUserInRole("admin") && username != securityContext.getUserPrincipal().toString())
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You do not have permissions to do this action.").build();
+
 			if(firstName != null)
-				userManager.updateUserFirstName(userId, firstName);
+				userManager.updateUserFirstName(username, firstName);
 
 			if(lastName != null)
-				userManager.updateUserLastName(userId, lastName);
+				userManager.updateUserLastName(username, lastName);
 
 			if(email != null)
-				userManager.updateUserEmail(userId, email);
+				userManager.updateUserEmail(username, email);
 
-			if(currentPassword != null && newPassword != null)
-				userManager.updateUserPassword(userId, currentPassword, newPassword);
+			if(currentPassword != null)
+				userManager.updateUserPassword(username, currentPassword, newPassword);
 
-			if(role != null)
-				userManager.updateUserRole(userId, role);
+			if(role != null && securityContext.isUserInRole("admin"))
+				userManager.updateUserRole(username, role);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@PUT
+	@Path("move")
+	public Response moveUser(@QueryParam("username") String username, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
+	{
+		try
+		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
+			userManager = new UserManager();
+			userManager.removeUser(username, oldGroupId);
+			userManager.addUser(username,newGroupId);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@PUT
+	@Path("addUser")
+	public Response addUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
+	{
+		try
+		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
+			userManager = new UserManager();
+			userManager.addUser(username, groupId);
+
+			return Response.ok().entity(userManager).build();
+		}
+		catch(Exception e)
+		{
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+	}
+
+	@DELETE
+	@Path("removeUser")
+	public Response removeUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
+	{
+		try
+		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
+			userManager = new UserManager();
+			userManager.removeUser(username, groupId);
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -96,6 +179,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.restoreDeleteUser(userId, 0);
 
@@ -113,7 +199,15 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
+			User user = userManager.getUserById(userId, true);
+
+			if(user.getUsername() == "admin")
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();
+
 			userManager.restoreDeleteUser(userId, 1);
 
 			return Response.ok().entity(userManager).build();

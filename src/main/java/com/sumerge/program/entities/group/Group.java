@@ -1,14 +1,16 @@
 package com.sumerge.program.entities.group;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sumerge.program.entities.user.User;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "groups")
-public class Group
+@Table(name = "workgroups")
+public class Group implements Serializable
 {
     @Id
     @Column(name = "GID", nullable = false)
@@ -67,5 +69,15 @@ public class Group
 
     public void setUsers(List<User> users) {
         this.users = users;
+    }
+
+    @Override
+    public String toString() {
+        return "Group{" +
+                "groupId=" + groupId +
+                ", ownerUid=" + ownerUid +
+                ", groupName='" + groupName + '\'' +
+                ", users=" + users +
+                '}';
     }
 }

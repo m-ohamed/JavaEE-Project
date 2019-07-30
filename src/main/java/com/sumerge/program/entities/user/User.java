@@ -1,5 +1,6 @@
 package com.sumerge.program.entities.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sumerge.program.entities.group.Group;
 
 import javax.persistence.*;
@@ -10,7 +11,11 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @NamedQueries({
-        @NamedQuery(name = "User.findAll", query = "SELECT e FROM User e")
+        @NamedQuery(name = "User.findAll", query = "SELECT e.username, e.firstName, e.lastName, e.email FROM User e WHERE e.isDeleted = false"),
+        @NamedQuery(name = "User.getAll", query = "SELECT e FROM User e"),
+        @NamedQuery(name = "User.find", query = "SELECT e.username, e.firstName, e.lastName, e.email from User e WHERE e.userId = :userId"),
+        @NamedQuery(name = "User.get", query = "SELECT e from User e WHERE e.userId = :userId"),
+        @NamedQuery(name = "User.UsernameGet", query = "SELECT e from User e WHERE e.username = :username")
 })
 public class User implements Serializable
 {
@@ -31,6 +36,7 @@ public class User implements Serializable
     @Column(name = "EMAIL")
     private String email;
 
+    @JsonIgnore
     @Column(name = "password")
     private String password;
 
@@ -40,6 +46,7 @@ public class User implements Serializable
     @Column(name = "IS_DELETED")
     private boolean isDeleted;
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "groupmember",
@@ -48,6 +55,13 @@ public class User implements Serializable
     private List<Group> groups = new ArrayList<>();
 
     public User(){}
+
+    public User(String username, String firstName, String lastName, String email) {
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+    }
 
     public User(String username, String firstName, String lastName, String email, String password, String role, boolean isDeleted, List<Group> groups) {
         this.username = username;
@@ -130,5 +144,20 @@ public class User implements Serializable
 
     public void setGroups(List<Group> groups) {
         this.groups = groups;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", username='" + username + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
+                ", isDeleted=" + isDeleted +
+                ", groups=" + groups +
+                '}';
     }
 }
