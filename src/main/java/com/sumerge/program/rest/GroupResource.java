@@ -92,14 +92,13 @@ public class GroupResource
         try
         {
             if(!securityContext.isUserInRole("admin"))
-                return Response.ok().status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+                return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
-            System.out.println("name" + group.getGroupName());
 
             if(group.getGroupName() == "default_group")
-                return Response.ok().status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
+                return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
 
             groupManager.deleteGroup(groupId);
 

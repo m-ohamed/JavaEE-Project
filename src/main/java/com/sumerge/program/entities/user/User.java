@@ -1,5 +1,6 @@
 package com.sumerge.program.entities.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.sumerge.program.entities.group.Group;
 
 import javax.persistence.*;
@@ -35,6 +36,7 @@ public class User implements Serializable
     @Column(name = "EMAIL")
     private String email;
 
+    @JsonIgnore
     @Column(name = "password")
     private String password;
 
@@ -44,6 +46,7 @@ public class User implements Serializable
     @Column(name = "IS_DELETED")
     private boolean isDeleted;
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
             name = "groupmember",

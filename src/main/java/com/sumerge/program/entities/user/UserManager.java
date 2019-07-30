@@ -5,6 +5,8 @@ import com.sumerge.program.entities.group.GroupManager;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
@@ -23,9 +25,9 @@ public class UserManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    private static final int ITERATIONS = 65536;
-    private static final int KEY_LENGTH = 512;
-    private static final String ALGORITHM = "PBKDF2WithHmacSHA512";
+    //private static final int ITERATIONS = 65536;
+    //private static final int KEY_LENGTH = 512;
+    //private static final String ALGORITHM = "PBKDF2WithHmacSHA512";
 
     public void createUser(String username, String firstName, String lastName, String email, String password, String role)
     {
@@ -38,9 +40,18 @@ public class UserManager
         user.setLastName(lastName);
         user.setEmail(email);
 
-        Optional<String> hashedPassword = hashPassword(password);
-        //user.setPassword(hashedPassword.get());
-        user.setPassword(password);
+        String hashedPassword = null;
+        try {
+            hashedPassword = sha256(password);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        if(hashedPassword != null)
+            user.setPassword(hashedPassword);
+        else
+            user.setPassword("default_password");
 
         user.setRole(role);
         user.setDeleted(false);
@@ -113,15 +124,22 @@ public class UserManager
         em.getTransaction().begin();
         User user = getUserByUsername(username);
 
-        Optional<String> currentHashedPassword = hashPassword(currentPassword);
-        Optional<String> newHashedPassword = hashPassword(newPassword);
-        //user.setPassword(hashedPassword.get());
+        String currentHashedPassword = null;
+        String newHashedPassword = null;
 
-        if(user.getPassword() == currentHashedPassword.get())
-            user.setPassword(newHashedPassword.get());
+        try {
+            currentHashedPassword = sha256(currentPassword);
+            newHashedPassword = sha256(newPassword);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        if(user.getPassword() == currentHashedPassword)
+            user.setPassword(newHashedPassword);
 
         em.merge(user);
-
         em.getTransaction().commit();
     }
 
@@ -146,11 +164,15 @@ public class UserManager
         Group oldGroup =  groupManager.getGroupById(oldGroupId);
         Group newGroup = groupManager.getGroupById(newGroupId);
 
-        oldGroup.getUsers().remove(user);
-        newGroup.getUsers().add(user);
-
         user.getGroups().remove(oldGroup);
         user.getGroups().add(newGroup);
+
+        //oldGroup.getUsers().remove(user);
+        //newGroup.getUsers().add(user);
+
+        em.merge(user);
+        //em.merge(oldGroup);
+        //em.merge(newGroup);
 
         em.getTransaction().commit();
     }
@@ -165,7 +187,7 @@ public class UserManager
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().add(group);
-        group.getUsers().add(user);
+        em.merge(user);
 
         em.getTransaction().commit();
     }
@@ -180,7 +202,7 @@ public class UserManager
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().remove(group);
-        group.getUsers().remove(user);
+        em.merge(user);
 
         em.getTransaction().commit();
     }
@@ -189,7 +211,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId,false);
+        User user = getUserById(userId,true);
         if(flag == 1)
             user.setDeleted(true);
         else
@@ -201,28 +223,13 @@ public class UserManager
     }
 
 
-    public static Optional<String> hashPassword (String password) {
-
-        String salt = "m2&&aVh@+e3G5QNE";
-
-        char[] chars = password.toCharArray();
-        byte[] bytes = salt.getBytes();
-
-        PBEKeySpec spec = new PBEKeySpec(chars, bytes, ITERATIONS, KEY_LENGTH);
-
-        Arrays.fill(chars, Character.MIN_VALUE);
-
-        try {
-            SecretKeyFactory fac = SecretKeyFactory.getInstance(ALGORITHM);
-            byte[] securePassword = fac.generateSecret(spec).getEncoded();
-            return Optional.of(Base64.getEncoder().encodeToString(securePassword));
-
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
-            System.err.println("Exception encountered in hashPassword()");
-            return Optional.empty();
-
-        } finally {
-            spec.clearPassword();
+    public static String sha256(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest md5 = MessageDigest.getInstance("SHA-256");
+        byte[] digest = md5.digest(input.getBytes("UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < digest.length; ++i) {
+            sb.append(Integer.toHexString((digest[i] & 0xFF) | 0x100).substring(1, 3));
         }
+        return sb.toString();
     }
 }

@@ -202,7 +202,7 @@ public class UserResource
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-			User user = userManager.getUserById(userId, false);
+			User user = userManager.getUserById(userId, true);
 
 			if(user.getUsername() == "admin")
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();

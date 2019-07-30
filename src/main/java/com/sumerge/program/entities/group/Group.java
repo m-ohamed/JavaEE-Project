@@ -16,7 +16,6 @@ public class Group implements Serializable
     @Column(name = "GID", nullable = false)
     private int groupId;
 
-    @JsonIgnore
     @ManyToOne
     @JoinColumn(name = "OWNER_UID", nullable = false)
     private User ownerUid;
