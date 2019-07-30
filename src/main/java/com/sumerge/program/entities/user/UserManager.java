@@ -154,29 +154,6 @@ public class UserManager
         em.getTransaction().commit();
     }
 
-    public void moveUser(String username, int oldGroupId, int newGroupId)
-    {
-        EntityManager em = emf.createEntityManager();
-        em.getTransaction().begin();
-
-        GroupManager groupManager = new GroupManager();
-        User user = getUserByUsername(username);
-        Group oldGroup =  groupManager.getGroupById(oldGroupId);
-        Group newGroup = groupManager.getGroupById(newGroupId);
-
-        user.getGroups().remove(oldGroup);
-        user.getGroups().add(newGroup);
-
-        //oldGroup.getUsers().remove(user);
-        //newGroup.getUsers().add(user);
-
-        em.merge(user);
-        //em.merge(oldGroup);
-        //em.merge(newGroup);
-
-        em.getTransaction().commit();
-    }
-
     public void addUser(String username, int groupId)
     {
         EntityManager em = emf.createEntityManager();
@@ -197,11 +174,16 @@ public class UserManager
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
-        GroupManager groupManager = new GroupManager();
         User user = getUserByUsername(username);
-        Group group = groupManager.getGroupById(groupId);
 
-        user.getGroups().remove(group);
+        int i;
+        for(i = 0; i < user.getGroups().size(); i++)
+        {
+            if(user.getGroups().get(i).getGroupId() == groupId)
+                break;
+        }
+
+        user.getGroups().remove(i);
         em.merge(user);
 
         em.getTransaction().commit();

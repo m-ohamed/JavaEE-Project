@@ -122,7 +122,8 @@ public class UserResource
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-			userManager.moveUser(username, oldGroupId, newGroupId);
+			userManager.removeUser(username, oldGroupId);
+			userManager.addUser(username,newGroupId);
 
 			return Response.ok().entity(userManager).build();
 		}
