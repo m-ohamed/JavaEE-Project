@@ -86,6 +86,9 @@ public class UserResource
 		{
 			userManager = new UserManager();
 
+			if(!securityContext.isUserInRole("admin") && username != securityContext.getUserPrincipal().toString())
+				return Response.status(Response.Status.fromStatusCode(401)).entity("You do not have permissions to do this action.").build();
+
 			if(firstName != null)
 				userManager.updateUserFirstName(username, firstName);
 
@@ -95,10 +98,10 @@ public class UserResource
 			if(email != null)
 				userManager.updateUserEmail(username, email);
 
-			if(currentPassword != null && newPassword != null)
+			if(currentPassword != null)
 				userManager.updateUserPassword(username, currentPassword, newPassword);
 
-			if(role != null)
+			if(role != null && securityContext.isUserInRole("admin"))
 				userManager.updateUserRole(username, role);
 
 			return Response.ok().entity(userManager).build();
@@ -115,6 +118,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.moveUser(username, oldGroupId, newGroupId);
 
@@ -132,6 +138,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.addUser(username, groupId);
 
@@ -149,6 +158,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.removeUser(username, groupId);
 
@@ -166,6 +178,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.restoreDeleteUser(userId, 0);
 
@@ -183,6 +198,9 @@ public class UserResource
 	{
 		try
 		{
+			if(!securityContext.isUserInRole("admin"))
+				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
 			userManager = new UserManager();
 			userManager.restoreDeleteUser(userId, 1);
 

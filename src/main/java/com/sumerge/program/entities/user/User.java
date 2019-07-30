@@ -14,7 +14,6 @@ import java.util.List;
         @NamedQuery(name = "User.getAll", query = "SELECT e FROM User e"),
         @NamedQuery(name = "User.find", query = "SELECT e.username, e.firstName, e.lastName, e.email from User e WHERE e.userId = :userId"),
         @NamedQuery(name = "User.get", query = "SELECT e from User e WHERE e.userId = :userId"),
-        @NamedQuery(name = "User.UsernameFind", query = "SELECT e.username, e.firstName, e.lastName, e.email from User e WHERE e.username = :username"),
         @NamedQuery(name = "User.UsernameGet", query = "SELECT e from User e WHERE e.username = :username")
 })
 public class User implements Serializable
@@ -63,6 +62,13 @@ public class User implements Serializable
         this.role = role;
         this.isDeleted = isDeleted;
         this.groups = groups;
+    }
+
+    public User(String username, String firstName, String lastName, String email) {
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
     }
 
     public String getUsername() {
@@ -135,5 +141,20 @@ public class User implements Serializable
 
     public void setGroups(List<Group> groups) {
         this.groups = groups;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", username='" + username + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
+                ", isDeleted=" + isDeleted +
+                ", groups=" + groups +
+                '}';
     }
 }

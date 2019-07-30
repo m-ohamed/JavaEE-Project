@@ -70,22 +70,18 @@ public class UserManager
 
     }
 
-    public User getUserByUsername(String username, boolean isAdmin)
+    public User getUserByUsername(String username)
     {
         EntityManager em = emf.createEntityManager();
 
-        if(isAdmin)
-            return em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
-        else
-            return em.createNamedQuery("User.UsernameFind", User.class).setParameter("username",username).getSingleResult();
-
+        return em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
     }
 
     public void updateUserFirstName(String username, String firstName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         user.setFirstName(firstName);
         em.merge(user);
         em.getTransaction().commit();
@@ -95,7 +91,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         user.setLastName(lastName);
         em.merge(user);
         em.getTransaction().commit();
@@ -105,7 +101,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         user.setEmail(email);
         em.merge(user);
         em.getTransaction().commit();
@@ -115,7 +111,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
 
         Optional<String> currentHashedPassword = hashPassword(currentPassword);
         Optional<String> newHashedPassword = hashPassword(newPassword);
@@ -133,7 +129,7 @@ public class UserManager
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         user.setRole(role);
 
         em.merge(user);
@@ -146,7 +142,7 @@ public class UserManager
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         Group oldGroup =  groupManager.getGroupById(oldGroupId);
         Group newGroup = groupManager.getGroupById(newGroupId);
 
@@ -165,7 +161,7 @@ public class UserManager
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserByUsername(username, false);
+        User user = getUserByUsername(username);
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().add(group);
@@ -180,7 +176,7 @@ public class UserManager
         em.getTransaction().begin();
 
         GroupManager groupManager = new GroupManager();
-        User user = getUserByUsername(username,false);
+        User user = getUserByUsername(username);
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().remove(group);
