@@ -31,21 +31,9 @@ public class GroupManager
     public Group getGroupById(int groupId)
     {
         EntityManager em = emf.createEntityManager();
-        //em.getTransaction().begin();
-        //System.out.println("in getGroupByID");
-        try
-        {
-            Group group = em.find(Group.class, groupId);
-            //System.out.println("got ID");
-            //em.getTransaction().commit();
-            return group;
-        }
-        catch (Exception e)
-        {
-            System.out.println("Error: " + e.getMessage());
-        }
+        Group group = em.find(Group.class, groupId);
 
-        return new Group();
+        return group;
     }
 
     public void updateGroupName(int groupId, String groupName)

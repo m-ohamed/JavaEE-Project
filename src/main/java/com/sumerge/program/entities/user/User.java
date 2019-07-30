@@ -53,6 +53,13 @@ public class User implements Serializable
 
     public User(){}
 
+    public User(String username, String firstName, String lastName, String email) {
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+    }
+
     public User(String username, String firstName, String lastName, String email, String password, String role, boolean isDeleted, List<Group> groups) {
         this.username = username;
         this.firstName = firstName;
@@ -62,13 +69,6 @@ public class User implements Serializable
         this.role = role;
         this.isDeleted = isDeleted;
         this.groups = groups;
-    }
-
-    public User(String username, String firstName, String lastName, String email) {
-        this.username = username;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
     }
 
     public String getUsername() {

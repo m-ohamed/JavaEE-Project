@@ -6,7 +6,9 @@ import com.sumerge.program.entities.group.GroupManager;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -16,6 +18,9 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path("group")
 public class GroupResource
 {
+    @Context
+    private SecurityContext securityContext;
+
     @EJB
     private GroupManager groupManager;
 
@@ -25,6 +30,9 @@ public class GroupResource
     {
         try
         {
+            if(!securityContext.isUserInRole("admin"))
+                return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
             groupManager = new GroupManager();
             groupManager.createGroup(ownerUid, groupName);
             return Response.ok().entity(groupManager).build();
@@ -41,10 +49,8 @@ public class GroupResource
     {
         try
         {
-            System.out.println("in rest endpoint");
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
-            System.out.println("got group: " + group.getGroupName());
 
             return Response.ok().entity(group.toString()).build();
         }
@@ -60,6 +66,9 @@ public class GroupResource
     {
         try
         {
+            if(!securityContext.isUserInRole("admin"))
+                return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
             groupManager = new GroupManager();
 
             if(groupName != null)
@@ -82,7 +91,16 @@ public class GroupResource
     {
         try
         {
+            if(!securityContext.isUserInRole("admin"))
+                return Response.ok().status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+
             groupManager = new GroupManager();
+            Group group = groupManager.getGroupById(groupId);
+            System.out.println("name" + group.getGroupName());
+
+            if(group.getGroupName() == "default_group")
+                return Response.ok().status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
+
             groupManager.deleteGroup(groupId);
 
             return Response.ok().entity(groupManager).build();
