@@ -34,8 +34,10 @@ INSERT INTO projdb.GROUPMEMBER (GID, UID)
 VALUES (2, 1);
 
 CREATE TABLE projdb.AUDITLOG (
+                                    ID int PRIMARY KEY auto_increment,
                                     ACTION_NAME varchar(50),
                                     ACTION_TIME datetime,
                                     ACTION_AUTHOR varchar(50),
-                                    ENTITY_DETAILS varchar(1000)
+                                    ENTITY_DETAILS varchar(1000),
+                                    ACTION_STATUS varchar(50)
 );

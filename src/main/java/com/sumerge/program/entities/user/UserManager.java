@@ -1,7 +1,10 @@
 package com.sumerge.program.entities.user;
 
+import com.sumerge.program.entities.auditlog.AuditLog;
+import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
+import org.eclipse.persistence.jpa.jpql.parser.DateTime;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
@@ -9,10 +12,10 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
@@ -29,7 +32,7 @@ public class UserManager
     //private static final int KEY_LENGTH = 512;
     //private static final String ALGORITHM = "PBKDF2WithHmacSHA512";
 
-    public void createUser(String username, String firstName, String lastName, String email, String password, String role)
+    public User createUser(String username, String firstName, String lastName, String email, String password, String role)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -58,16 +61,22 @@ public class UserManager
 
         em.persist(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
     public List<User> getAllUsers(boolean isAdmin)
     {
         EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
 
         if(isAdmin)
             return em.createNamedQuery("User.getAll", User.class).getResultList();
         else
             return em.createNamedQuery("User.findAll", User.class).getResultList();
+
+
+
     }
 
     public User getUserById(int userId, boolean isAdmin)
@@ -78,7 +87,6 @@ public class UserManager
             return em.createNamedQuery("User.get", User.class).setParameter("userId",userId).getSingleResult();
         else
             return em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
-
     }
 
     public User getUserByUsername(String username)
@@ -88,7 +96,7 @@ public class UserManager
         return em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
     }
 
-    public void updateUserFirstName(String username, String firstName)
+    public User updateUserFirstName(String username, String firstName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -96,9 +104,11 @@ public class UserManager
         user.setFirstName(firstName);
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
-    public void updateUserLastName(String username, String lastName)
+    public User updateUserLastName(String username, String lastName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -106,9 +116,11 @@ public class UserManager
         user.setLastName(lastName);
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
-    public void updateUserEmail(String username, String email)
+    public User updateUserEmail(String username, String email)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -116,9 +128,11 @@ public class UserManager
         user.setEmail(email);
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
-    public void updateUserPassword(String username, String currentPassword, String newPassword)
+    public User updateUserPassword(String username, String currentPassword, String newPassword)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -141,9 +155,11 @@ public class UserManager
 
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
-    public void updateUserRole(String username, String role)
+    public User updateUserRole(String username, String role)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -152,6 +168,8 @@ public class UserManager
 
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
     public void addUser(String username, int groupId)
@@ -169,7 +187,7 @@ public class UserManager
         em.getTransaction().commit();
     }
 
-    public void removeUser(String username, int groupId)
+    public User removeUser(String username, int groupId)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -187,9 +205,11 @@ public class UserManager
         em.merge(user);
 
         em.getTransaction().commit();
+
+        return user;
     }
 
-    public void restoreDeleteUser(int userId, int flag)
+    public User restoreDeleteUser(int userId, int flag)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -202,6 +222,8 @@ public class UserManager
 
         em.merge(user);
         em.getTransaction().commit();
+
+        return user;
     }
 
 

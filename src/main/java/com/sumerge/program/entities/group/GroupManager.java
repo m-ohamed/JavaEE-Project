@@ -14,7 +14,7 @@ public class GroupManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    public void createGroup(int ownerUid, String groupName)
+    public Group createGroup(int ownerUid, String groupName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -26,6 +26,8 @@ public class GroupManager
 
         em.persist(group);
         em.getTransaction().commit();
+
+        return group;
     }
 
     public Group getGroupById(int groupId)

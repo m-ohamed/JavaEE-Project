@@ -1,7 +1,14 @@
 package com.sumerge.program.rest;
 
+import com.sumerge.program.entities.auditlog.AuditLog;
+import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.user.User;
 import com.sumerge.program.entities.user.UserManager;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
 import java.util.logging.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
@@ -27,24 +34,34 @@ public class UserResource
 	@EJB
 	private UserManager userManager;
 
+	private AuditLogManager auditLogManager;
+
 	@POST
 	@Path("create")
 	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
 							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
 							   @QueryParam("password") String password, @QueryParam("role") String role)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Create User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			userManager = new UserManager();
-			userManager.createUser(username, firstName, lastName, email, password, role);
+			User user = userManager.createUser(username, firstName, lastName, email, password, role);
+
+			auditLogManager.createLog("Create User", securityContext.getUserPrincipal().toString(),user.toString(),"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch (Exception e)
 		{
+			auditLogManager.createLog("Create User", securityContext.getUserPrincipal().toString(),"N/A","FAILED");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -53,25 +70,36 @@ public class UserResource
 	@Path("getAll")
 	public Response getUsers()
 	{
+		auditLogManager = new AuditLogManager();
+
 		userManager = new UserManager();
 		boolean isAdmin = securityContext.isUserInRole("admin");
 
-		return Response.ok().entity(userManager.getAllUsers(isAdmin)).build();
+		List<User> usersList = userManager.getAllUsers(isAdmin);
+
+		auditLogManager.createLog("Get All Users", securityContext.getUserPrincipal().toString(),"N/A","SUCCESS");
+
+		return Response.ok().entity(usersList).build();
 	}
 
 	@GET
 	@Path("find/{userId}")
 	public Response getUser(@PathParam("userId") int userId)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			userManager = new UserManager();
 			User user = userManager.getUserById(userId, securityContext.isUserInRole("admin"));
 
+			auditLogManager.createLog("Find User", securityContext.getUserPrincipal().toString(),user.toString(),"SUCCESS");
+
 			return Response.ok().entity(user.toString()).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Find User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			System.out.println(e.getStackTrace());
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
@@ -84,35 +112,48 @@ public class UserResource
 							   @QueryParam("currentPassword") String currentPassword,
 							   @QueryParam("newPassword") String newPassword, @QueryParam("role") String role)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
+			User user = new User();
+
 			userManager = new UserManager();
 
 			if(!securityContext.isUserInRole("admin") && !username.equalsIgnoreCase(securityContext.getUserPrincipal().toString()))
+			{
+				auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You do not have permissions to do this action.").build();
+			}
 
 			if(username == "admin")
+			{
+				auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not edit the default administrator.").build();
+			}
 
 			if(firstName != null)
-				userManager.updateUserFirstName(username, firstName);
+				user = userManager.updateUserFirstName(username, firstName);
 
 			if(lastName != null)
-				userManager.updateUserLastName(username, lastName);
+				user = userManager.updateUserLastName(username, lastName);
 
 			if(email != null)
-				userManager.updateUserEmail(username, email);
+				user = userManager.updateUserEmail(username, email);
 
 			if(currentPassword != null)
-				userManager.updateUserPassword(username, currentPassword, newPassword);
+				user = userManager.updateUserPassword(username, currentPassword, newPassword);
 
 			if(role != null && securityContext.isUserInRole("admin"))
-				userManager.updateUserRole(username, role);
+				user = userManager.updateUserRole(username, role);
+
+			auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),user.toString(),"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -121,22 +162,33 @@ public class UserResource
 	@Path("move")
 	public Response moveUser(@QueryParam("username") String username, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			if(username == "admin" && oldGroupId == 1)
+			{
+				auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not move the default administrator from the default group.").build();
+			}
 
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			userManager = new UserManager();
 			userManager.removeUser(username, oldGroupId);
 			userManager.addUser(username,newGroupId);
 
+			auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"New group ID: " + newGroupId + ", old group ID: " + oldGroupId,"SUCCESS");
+
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -145,18 +197,26 @@ public class UserResource
 	@Path("addUser")
 	public Response addUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Add User To Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			userManager = new UserManager();
 			userManager.addUser(username, groupId);
+
+			auditLogManager.createLog("Add User To Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Add User To Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -165,21 +225,32 @@ public class UserResource
 	@Path("removeUser")
 	public Response removeUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			if(username == "admin")
+			{
+				auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not remove the default administrator.").build();
+			}
 
 			userManager = new UserManager();
 			userManager.removeUser(username, groupId);
+
+			auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -188,18 +259,26 @@ public class UserResource
 	@Path("restore/{userId}")
 	public Response restoreUser(@PathParam("userId")int userId)
 	{
+		auditLogManager = new AuditLogManager();
+
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Restore User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			userManager = new UserManager();
-			userManager.restoreDeleteUser(userId, 0);
+			User user = userManager.restoreDeleteUser(userId, 0);
+
+			auditLogManager.createLog("Restore User", securityContext.getUserPrincipal().toString(),user.toString(),"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Restore User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
@@ -211,23 +290,28 @@ public class UserResource
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
+			{
+				auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+			}
 
 			if(userId == 1)
+			{
+				auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();
+			}
 
 			userManager = new UserManager();
-			User user = userManager.getUserById(userId, true);
 
-			if(user.getUsername() == "admin")
-				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();
+			User user = userManager.restoreDeleteUser(userId, 1);
 
-			userManager.restoreDeleteUser(userId, 1);
+			auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),user.toString(),"SUCCESS");
 
 			return Response.ok().entity(userManager).build();
 		}
 		catch(Exception e)
 		{
+			auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 	}
