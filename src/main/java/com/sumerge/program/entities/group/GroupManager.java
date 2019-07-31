@@ -38,7 +38,7 @@ public class GroupManager
         return group;
     }
 
-    public void updateGroupName(int groupId, String groupName)
+    public Group updateGroupName(int groupId, String groupName)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -46,9 +46,11 @@ public class GroupManager
         group.setGroupName(groupName);
         em.merge(group);
         em.getTransaction().commit();
+
+        return group;
     }
 
-    public void updateGroupOwner(int groupId, int ownerUid)
+    public Group updateGroupOwner(int groupId, int ownerUid)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -57,6 +59,8 @@ public class GroupManager
         group.setOwnerUid(user);
         em.merge(group);
         em.getTransaction().commit();
+
+        return group;
     }
 
     public void deleteGroup(int groupId)

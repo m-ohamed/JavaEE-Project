@@ -90,14 +90,15 @@ public class GroupResource
             }
 
             groupManager = new GroupManager();
+            Group group = new Group();
 
             if(groupName != null)
-                groupManager.updateGroupName(groupId, groupName);
+                group = groupManager.updateGroupName(groupId, groupName);
 
             if(groupOwner != null)
-                groupManager.updateGroupOwner(groupId, groupOwner);
+                group = groupManager.updateGroupOwner(groupId, groupOwner);
 
-            auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(),"N/A","SUCCESS");
+            auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(), group.toString(),"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
@@ -115,20 +116,29 @@ public class GroupResource
         try
         {
             if(!securityContext.isUserInRole("admin"))
+            {
+                auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+            }
 
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
             if(group.getGroupName() == "default_group")
+            {
+                auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
+            }
 
             groupManager.deleteGroup(groupId);
+
+            auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
         catch (Exception e)
         {
+            auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
     }
