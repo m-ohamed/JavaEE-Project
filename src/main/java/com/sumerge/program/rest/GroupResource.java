@@ -11,6 +11,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import java.util.logging.Logger;
+
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RequestScoped
@@ -19,6 +21,8 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path("group")
 public class GroupResource
 {
+    private static final Logger LOGGER = Logger.getLogger(GroupResource.class.getName());
+    
     @Context
     private SecurityContext securityContext;
 
@@ -31,6 +35,7 @@ public class GroupResource
     @Path("create")
     public Response createGroup(@QueryParam("ownerUid")int ownerUid, @QueryParam("groupName")String groupName)
     {
+        LOGGER.info("Entering create group REST method.");
         auditLogManager = new AuditLogManager();
 
         try
@@ -53,12 +58,17 @@ public class GroupResource
             auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+        finally
+        {
+            LOGGER.info("Leaving create group REST method.");
+        }
     }
 
     @GET
     @Path("find/{groupId}")
     public Response getGroup(@PathParam("groupId") int groupId)
     {
+        LOGGER.info("Entering find group REST method.");
         auditLogManager = new AuditLogManager();
 
         try
@@ -75,12 +85,18 @@ public class GroupResource
             auditLogManager.createLog("Find Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+        finally
+        {
+            LOGGER.info("Leaving find group REST method.");
+        }
     }
 
     @PUT
     @Path("update")
     public Response updateGroup(@QueryParam("groupId")int groupId, @QueryParam("groupName")String groupName, @QueryParam("groupOwner")Integer groupOwner)
     {
+        LOGGER.info("Entering update group REST method.");
+        
         try
         {
             if(!securityContext.isUserInRole("admin"))
@@ -107,12 +123,17 @@ public class GroupResource
             auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+        finally
+        {
+            LOGGER.info("Leaving update group REST method.");
+        }
     }
 
     @DELETE
     @Path("delete/{groupId}")
     public Response deleteGroup(@PathParam("groupId")int groupId)
     {
+        LOGGER.info("Entering delete group REST method.");
         try
         {
             if(!securityContext.isUserInRole("admin"))
@@ -140,6 +161,10 @@ public class GroupResource
         {
             auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        finally
+        {
+            LOGGER.info("Leaving delete group REST method.");
         }
     }
 

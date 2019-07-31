@@ -42,6 +42,7 @@ public class UserResource
 							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
 							   @QueryParam("password") String password, @QueryParam("role") String role)
 	{
+		LOGGER.info("Entering create user REST method.");
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -64,12 +65,17 @@ public class UserResource
 			auditLogManager.createLog("Create User", securityContext.getUserPrincipal().toString(),"N/A","FAILED");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally 
+		{
+			LOGGER.info("Leaving create user REST method.");
+		}
 	}
 
 	@GET
 	@Path("getAll")
 	public Response getUsers()
 	{
+		LOGGER.info("Entering get all users REST method.");
 		auditLogManager = new AuditLogManager();
 
 		userManager = new UserManager();
@@ -79,6 +85,8 @@ public class UserResource
 
 		auditLogManager.createLog("Get All Users", securityContext.getUserPrincipal().toString(),"N/A","SUCCESS");
 
+		LOGGER.info("Leaving get all users REST method.");
+		
 		return Response.ok().entity(usersList).build();
 	}
 
@@ -86,6 +94,7 @@ public class UserResource
 	@Path("find/{userId}")
 	public Response getUser(@PathParam("userId") int userId)
 	{
+		LOGGER.info("Entering get user REST method.");
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -103,6 +112,10 @@ public class UserResource
 			System.out.println(e.getStackTrace());
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally
+		{
+			LOGGER.info("Leaving get user REST method.");
+		}
 	}
 
 	@PUT
@@ -112,6 +125,8 @@ public class UserResource
 							   @QueryParam("currentPassword") String currentPassword,
 							   @QueryParam("newPassword") String newPassword, @QueryParam("role") String role)
 	{
+		LOGGER.info("Entering update user REST method.");
+		
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -156,12 +171,17 @@ public class UserResource
 			auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally
+		{
+			LOGGER.info("Leaving update user REST method.");
+		}
 	}
 
 	@PUT
 	@Path("move")
 	public Response moveUser(@QueryParam("username") String username, @QueryParam("oldGroupId")int oldGroupId, @QueryParam("newGroupId")int newGroupId)
 	{
+		LOGGER.info("Entering move user REST method.");
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -191,12 +211,17 @@ public class UserResource
 			auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally
+		{
+			LOGGER.info("Leaving move user REST method.");
+		}
 	}
 
 	@PUT
 	@Path("addUser")
 	public Response addUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
+		LOGGER.info("Entering add user to group REST method.");
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -219,12 +244,18 @@ public class UserResource
 			auditLogManager.createLog("Add User To Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally 
+		{
+			LOGGER.info("Leaving add user to group REST method.");
+		}
 	}
 
 	@DELETE
 	@Path("removeUser")
 	public Response removeUser(@QueryParam("username") String username, @QueryParam("groupId")int groupId)
 	{
+		LOGGER.info("Entering remove user from group REST method.");
+		
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -253,12 +284,18 @@ public class UserResource
 			auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally
+		{
+			LOGGER.info("Leaving remove user from group REST method.");
+		}
 	}
 
 	@PUT
 	@Path("restore/{userId}")
 	public Response restoreUser(@PathParam("userId")int userId)
 	{
+		LOGGER.info("Entering restore user REST method.");
+		
 		auditLogManager = new AuditLogManager();
 
 		try
@@ -281,12 +318,18 @@ public class UserResource
 			auditLogManager.createLog("Restore User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
+		finally
+		{
+			LOGGER.info("Leaving restore user REST method.");
+		}
 	}
 
 	@DELETE
 	@Path("delete/{userId}")
 	public Response deleteUser(@PathParam("userId")int userId)
 	{
+		LOGGER.info("Entering delete user REST method.");
+		
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
@@ -313,6 +356,10 @@ public class UserResource
 		{
 			auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+		finally
+		{
+			LOGGER.info("Leaving delete user REST method.");
 		}
 	}
 
