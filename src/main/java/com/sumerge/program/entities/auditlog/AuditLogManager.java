@@ -1,5 +1,8 @@
 package com.sumerge.program.entities.auditlog;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -15,7 +18,7 @@ public class AuditLogManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    public void createLog(String actionName, String actionAuthor, String entityDetails, String actionStatus)
+    public void createLog(String actionName, String actionAuthor, Object entityDetails, String actionStatus)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -24,7 +27,18 @@ public class AuditLogManager
         auditLog.setActionName(actionName);
         auditLog.setActionTime(getDateTime());
         auditLog.setActionAuthor(actionAuthor);
-        auditLog.setEntityDetails(entityDetails);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        try
+        {
+            auditLog.setEntityDetails(objectMapper.writeValueAsString(entityDetails));
+        }
+        catch (JsonProcessingException e)
+        {
+            e.printStackTrace();
+        }
+
         auditLog.setActionStatus(actionStatus);
 
         em.persist(auditLog);
