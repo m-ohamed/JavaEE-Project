@@ -6,6 +6,7 @@ import org.apache.log4j.Logger;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
+import javax.transaction.Transactional;
 
 @Stateless
 public class GroupManager
@@ -18,6 +19,7 @@ public class GroupManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
+    @Transactional(rollbackOn = Exception.class)
     public Group createGroup(int ownerUid, String groupName, String actionAuthor)
     {
         auditLogManager = new AuditLogManager();
@@ -40,6 +42,7 @@ public class GroupManager
         return group;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public Group getGroupById(int groupId)
     {
         //LOGGER.debug("Entering get group by ID method.");
@@ -52,6 +55,7 @@ public class GroupManager
         return group;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public Group updateGroupName(int groupId, String groupName, String actionAuthor)
     {
         //LOGGER.debug("Entering update group name method.");
@@ -72,6 +76,7 @@ public class GroupManager
         return group;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public Group updateGroupOwner(int groupId, int ownerUid, String actionAuthor)
     {
         //LOGGER.debug("Entering update group owner method.");
@@ -94,20 +99,26 @@ public class GroupManager
         return group;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public void deleteGroup(int groupId, String actionAuthor)
     {
         //LOGGER.debug("Entering delete group method.");
 
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        Group group = getGroupById(groupId);
+        Group group = em.find(Group.class, groupId);
+        System.out.println(group.toString());
 
         if(!em.contains(group))
             group = em.merge(group);
 
         auditLogManager.createLog("Delete Group",actionAuthor,group,"SUCCESS");
 
+        //em.merge(group);
         em.remove(group);
+
         em.getTransaction().commit();
 
         LOGGER.debug("Leaving delete group method.");

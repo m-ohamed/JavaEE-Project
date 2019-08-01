@@ -47,7 +47,7 @@ public class GroupResource
             }
 
             groupManager = new GroupManager();
-            Group group = groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
+            //Group group = groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
 
             //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),group.toString(),"SUCCESS");
 

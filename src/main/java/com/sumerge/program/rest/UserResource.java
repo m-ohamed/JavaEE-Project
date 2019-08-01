@@ -28,6 +28,7 @@ public class UserResource
 {
 
 	//Improve add/delete user method?
+	//Finding user as a user needs fixing
 
 	private static final Logger LOGGER = Logger.getLogger(UserResource.class.getName());
 

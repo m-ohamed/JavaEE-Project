@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.transaction.Transactional;
 
 @Stateless
 public class UserManager
@@ -33,6 +34,7 @@ public class UserManager
 
     private AuditLogManager auditLogManager;
 
+    @Transactional(rollbackOn = Exception.class)
     public User createUser(String username, String firstName, String lastName, String email, String password, String role, String actionAuthor)
     {
         //LOGGER.debug("Entering create user method.");
@@ -73,6 +75,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public List<User> getAllUsers(boolean isAdmin)
     {
         //LOGGER.debug("Entering get all users method.");
@@ -91,6 +94,7 @@ public class UserManager
         return usersList;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User getUserById(int userId, boolean isAdmin)
     {
         //LOGGER.debug("Entering get user by ID method.");
@@ -109,6 +113,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User getUserByUsername(String username)
     {
         //LOGGER.debug("Entering get user by username method.");
@@ -122,6 +127,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User updateUserFirstName(String username, String firstName, String actionAuthor)
     {
         //LOGGER.debug("Entering update user first name method.");
@@ -143,6 +149,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User updateUserLastName(String username, String lastName, String actionAuthor)
     {
         //LOGGER.debug("Entering update user last name method.");
@@ -164,6 +171,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User updateUserEmail(String username, String email, String actionAuthor)
     {
         //LOGGER.debug("Entering update user email method.");
@@ -185,6 +193,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User updateUserPassword(String username, String currentPassword, String newPassword, String actionAuthor)
     {
         //LOGGER.debug("Entering update user password method.");
@@ -220,6 +229,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User updateUserRole(String username, String role, String actionAuthor)
     {
         //LOGGER.debug("Entering update user role method.");
@@ -241,6 +251,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public void addUser(String username, int groupId, String actionAuthor)
     {
         //LOGGER.debug("Entering add user to group method.");
@@ -264,6 +275,7 @@ public class UserManager
         LOGGER.debug("Leaving add user to group method.");
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User removeUser(String username, int groupId, String actionAuthor)
     {
         //LOGGER.debug("Entering remove user from group method.");
@@ -294,6 +306,7 @@ public class UserManager
         return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User restoreDeleteUser(int userId, int flag, String actionAuthor)
     {
         //LOGGER.debug("Entering restore/delete user method.");
@@ -303,13 +316,17 @@ public class UserManager
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserById(userId,true);
+
         if(flag == 1)
+        {
             user.setDeleted(true);
+            auditLogManager.createLog("Delete User", actionAuthor, user,"SUCCESS");
+        }
         else
+        {
             user.setDeleted(false);
-
-
-        auditLogManager.createLog("Restore/Delete User", actionAuthor, user,"SUCCESS");
+            auditLogManager.createLog("Restore User", actionAuthor, user,"SUCCESS");
+        }
 
         em.merge(user);
         em.getTransaction().commit();
@@ -317,7 +334,6 @@ public class UserManager
         LOGGER.debug("Leaving restore/delete user method.");
         return user;
     }
-
 
     public static String sha256(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         //LOGGER.debug("Entering hashing method.");
