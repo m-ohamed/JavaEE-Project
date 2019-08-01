@@ -1,5 +1,6 @@
 package com.sumerge.program.rest;
 
+//import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
 
@@ -10,6 +11,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.log4j.Logger;
+
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 @RequestScoped
@@ -18,28 +21,46 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path("group")
 public class GroupResource
 {
+    private static final Logger LOGGER = Logger.getLogger(GroupResource.class.getName());
+    
     @Context
     private SecurityContext securityContext;
 
     @EJB
     private GroupManager groupManager;
 
+    //private AuditLogManager auditLogManager;
+
     @POST
     @Path("create")
     public Response createGroup(@QueryParam("ownerUid")int ownerUid, @QueryParam("groupName")String groupName)
     {
+        //LOGGER.debug("Entering create group REST method.");
+        //auditLogManager = new //auditLogManager();
+
         try
         {
             if(!securityContext.isUserInRole("admin"))
+            {
+                //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+            }
 
             groupManager = new GroupManager();
-            groupManager.createGroup(ownerUid, groupName);
+            //Group group = groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
+
+            //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),group.toString(),"SUCCESS");
+
             return Response.ok().entity(groupManager).build();
         }
         catch (Exception e)
         {
+            //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        finally
+        {
+            LOGGER.debug("Leaving create group REST method.");
         }
     }
 
@@ -47,16 +68,26 @@ public class GroupResource
     @Path("find/{groupId}")
     public Response getGroup(@PathParam("groupId") int groupId)
     {
+        //LOGGER.debug("Entering find group REST method.");
+        //auditLogManager = new //auditLogManager();
+
         try
         {
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
+            //auditLogManager.createLog("Find Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
+
             return Response.ok().entity(group.toString()).build();
         }
         catch(Exception e)
         {
+            //auditLogManager.createLog("Find Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        finally
+        {
+            LOGGER.debug("Leaving find group REST method.");
         }
     }
 
@@ -64,24 +95,37 @@ public class GroupResource
     @Path("update")
     public Response updateGroup(@QueryParam("groupId")int groupId, @QueryParam("groupName")String groupName, @QueryParam("groupOwner")Integer groupOwner)
     {
+        //LOGGER.debug("Entering update group REST method.");
+        
         try
         {
             if(!securityContext.isUserInRole("admin"))
+            {
+                //auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+            }
 
             groupManager = new GroupManager();
+            Group group = new Group();
 
             if(groupName != null)
-                groupManager.updateGroupName(groupId, groupName);
+                group = groupManager.updateGroupName(groupId, groupName, securityContext.getUserPrincipal().toString());
 
             if(groupOwner != null)
-                groupManager.updateGroupOwner(groupId, groupOwner);
+                group = groupManager.updateGroupOwner(groupId, groupOwner, securityContext.getUserPrincipal().toString());
+
+            //auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(), group.toString(),"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
         catch (Exception e)
         {
+            //auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        finally
+        {
+            LOGGER.debug("Leaving update group REST method.");
         }
     }
 
@@ -89,24 +133,38 @@ public class GroupResource
     @Path("delete/{groupId}")
     public Response deleteGroup(@PathParam("groupId")int groupId)
     {
+        //LOGGER.debug("Entering delete group REST method.");
         try
         {
             if(!securityContext.isUserInRole("admin"))
+            {
+                //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
+            }
 
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
             if(group.getGroupName() == "default_group")
+            {
+                //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
+            }
 
-            groupManager.deleteGroup(groupId);
+            groupManager.deleteGroup(groupId, securityContext.getUserPrincipal().toString());
+
+            //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
         catch (Exception e)
         {
+            //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        finally
+        {
+            LOGGER.debug("Leaving delete group REST method.");
         }
     }
 

@@ -1,7 +1,11 @@
 package com.sumerge.program.entities.user;
 
+import com.sumerge.program.entities.auditlog.AuditLog;
+import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
+import org.apache.log4j.Logger;
+import org.eclipse.persistence.jpa.jpql.parser.DateTime;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
@@ -9,12 +13,13 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.util.*;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.transaction.Transactional;
 
 @Stateless
 public class UserManager
@@ -25,12 +30,16 @@ public class UserManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    //private static final int ITERATIONS = 65536;
-    //private static final int KEY_LENGTH = 512;
-    //private static final String ALGORITHM = "PBKDF2WithHmacSHA512";
+    private static final Logger LOGGER = Logger.getLogger(UserManager.class.getName());
 
-    public void createUser(String username, String firstName, String lastName, String email, String password, String role)
+    private AuditLogManager auditLogManager;
+
+    @Transactional(rollbackOn = Exception.class)
+    public User createUser(String username, String firstName, String lastName, String email, String password, String role, String actionAuthor)
     {
+        //LOGGER.debug("Entering create user method.");
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -56,70 +65,141 @@ public class UserManager
         user.setRole(role);
         user.setDeleted(false);
 
+        auditLogManager.createLog("Create User",actionAuthor,user,"SUCCESS");
+
         em.persist(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving create user method.");
+
+        return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public List<User> getAllUsers(boolean isAdmin)
     {
+        //LOGGER.debug("Entering get all users method.");
+
         EntityManager em = emf.createEntityManager();
 
+        List<User> usersList;
+
         if(isAdmin)
-            return em.createNamedQuery("User.getAll", User.class).getResultList();
+            usersList = em.createNamedQuery("User.getAll", User.class).getResultList();
         else
-            return em.createNamedQuery("User.findAll", User.class).getResultList();
+            usersList = em.createNamedQuery("User.findAll", User.class).getResultList();
+
+        LOGGER.debug("Leaving get all users method.");
+
+        return usersList;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User getUserById(int userId, boolean isAdmin)
     {
+        //LOGGER.debug("Entering get user by ID method.");
+
         EntityManager em = emf.createEntityManager();
+
+        User user;
 
         if(isAdmin)
-            return em.createNamedQuery("User.get", User.class).setParameter("userId",userId).getSingleResult();
+            user = em.createNamedQuery("User.get", User.class).setParameter("userId",userId).getSingleResult();
         else
-            return em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
+            user = em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
 
+        LOGGER.debug("Leaving get user by ID method.");
+
+        return user;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     public User getUserByUsername(String username)
     {
+        //LOGGER.debug("Entering get user by username method.");
+
         EntityManager em = emf.createEntityManager();
 
-        return em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
+        User user = em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
+
+        LOGGER.debug("Leaving get user by username method.");
+
+        return user;
     }
 
-    public void updateUserFirstName(String username, String firstName)
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUserFirstName(String username, String firstName, String actionAuthor)
     {
+        //LOGGER.debug("Entering update user first name method.");
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserByUsername(username);
         user.setFirstName(firstName);
+
+        auditLogManager.createLog("Update User", actionAuthor, user,"SUCCESS");
+
         em.merge(user);
         em.getTransaction().commit();
+
+
+        LOGGER.debug("Leaving update user first name method.");
+
+        return user;
     }
 
-    public void updateUserLastName(String username, String lastName)
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUserLastName(String username, String lastName, String actionAuthor)
     {
+        //LOGGER.debug("Entering update user last name method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserByUsername(username);
         user.setLastName(lastName);
+
+        auditLogManager.createLog("Update User", actionAuthor, user,"SUCCESS");
+
         em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving update user last name method.");
+
+        return user;
     }
 
-    public void updateUserEmail(String username, String email)
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUserEmail(String username, String email, String actionAuthor)
     {
+        //LOGGER.debug("Entering update user email method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserByUsername(username);
         user.setEmail(email);
+
+        auditLogManager.createLog("Update User", actionAuthor, user,"SUCCESS");
+
         em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving update user email method.");
+
+        return user;
     }
 
-    public void updateUserPassword(String username, String currentPassword, String newPassword)
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUserPassword(String username, String currentPassword, String newPassword, String actionAuthor)
     {
+        //LOGGER.debug("Entering update user password method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserByUsername(username);
@@ -139,23 +219,45 @@ public class UserManager
         if(user.getPassword() == currentHashedPassword)
             user.setPassword(newHashedPassword);
 
+        auditLogManager.createLog("Update User", actionAuthor, user,"SUCCESS");
+
         em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving update user password method.");
+
+        return user;
     }
 
-    public void updateUserRole(String username, String role)
+    @Transactional(rollbackOn = Exception.class)
+    public User updateUserRole(String username, String role, String actionAuthor)
     {
+        //LOGGER.debug("Entering update user role method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserByUsername(username);
         user.setRole(role);
 
+        auditLogManager.createLog("Update User", actionAuthor, user,"SUCCESS");
+
         em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving update user role method.");
+
+        return user;
     }
 
-    public void addUser(String username, int groupId)
+    @Transactional(rollbackOn = Exception.class)
+    public void addUser(String username, int groupId, String actionAuthor)
     {
+        //LOGGER.debug("Entering add user to group method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -164,13 +266,22 @@ public class UserManager
         Group group = groupManager.getGroupById(groupId);
 
         user.getGroups().add(group);
-        em.merge(user);
 
+        auditLogManager.createLog("Add User To Group", actionAuthor, user,"SUCCESS");
+
+        em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving add user to group method.");
     }
 
-    public void removeUser(String username, int groupId)
+    @Transactional(rollbackOn = Exception.class)
+    public User removeUser(String username, int groupId, String actionAuthor)
     {
+        //LOGGER.debug("Entering remove user from group method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -184,34 +295,57 @@ public class UserManager
         }
 
         user.getGroups().remove(i);
-        em.merge(user);
 
+        auditLogManager.createLog("Remove User From Group", actionAuthor, user,"SUCCESS");
+
+        em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving remove user from group method.");
+
+        return user;
     }
 
-    public void restoreDeleteUser(int userId, int flag)
+    @Transactional(rollbackOn = Exception.class)
+    public User restoreDeleteUser(int userId, int flag, String actionAuthor)
     {
+        //LOGGER.debug("Entering restore/delete user method.");
+
+        auditLogManager = new AuditLogManager();
+
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         User user = getUserById(userId,true);
-        if(flag == 1)
-            user.setDeleted(true);
-        else
-            user.setDeleted(false);
 
+        if(flag == 1)
+        {
+            user.setDeleted(true);
+            auditLogManager.createLog("Delete User", actionAuthor, user,"SUCCESS");
+        }
+        else
+        {
+            user.setDeleted(false);
+            auditLogManager.createLog("Restore User", actionAuthor, user,"SUCCESS");
+        }
 
         em.merge(user);
         em.getTransaction().commit();
+
+        LOGGER.debug("Leaving restore/delete user method.");
+        return user;
     }
 
-
     public static String sha256(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        //LOGGER.debug("Entering hashing method.");
+
         MessageDigest md5 = MessageDigest.getInstance("SHA-256");
         byte[] digest = md5.digest(input.getBytes("UTF-8"));
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < digest.length; ++i) {
             sb.append(Integer.toHexString((digest[i] & 0xFF) | 0x100).substring(1, 3));
         }
+
+        LOGGER.debug("Leaving hashing method.");
         return sb.toString();
     }
 }

@@ -10,7 +10,7 @@ swarm:
             methods: [GET, POST, PUT, DELETE]
             roles: [admin]
           - url-pattern: /*
-            methods: [GET]
+            methods: [GET, POST, PUT, DELETE]
             roles: [user]
   security:
     security-domains:

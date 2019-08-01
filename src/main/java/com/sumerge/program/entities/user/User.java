@@ -134,8 +134,8 @@ public class User implements Serializable
         return isDeleted;
     }
 
-    public void setDeleted(boolean deleted) {
-        isDeleted = deleted;
+    public void setDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
     public List<Group> getGroups() {
