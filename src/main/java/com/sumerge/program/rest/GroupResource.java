@@ -1,6 +1,5 @@
 package com.sumerge.program.rest;
 
-//import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
 
@@ -11,7 +10,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import com.sumerge.program.exceptions.MissingParameterException;
 import org.apache.log4j.Logger;
+
+import java.sql.SQLIntegrityConstraintViolationException;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
@@ -47,15 +49,20 @@ public class GroupResource
             }
 
             groupManager = new GroupManager();
-            //Group group = groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
+            groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
 
             //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),group.toString(),"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
-        catch (Exception e)
+        catch (MissingParameterException e)
         {
-            //auditLogManager.createLog("Create Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
+            LOGGER.debug("Missing Parameter Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
         finally
@@ -76,13 +83,11 @@ public class GroupResource
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
-            //auditLogManager.createLog("Find Group", securityContext.getUserPrincipal().toString(),"Group ID: " + groupId,"SUCCESS");
-
             return Response.ok().entity(group.toString()).build();
         }
-        catch(Exception e)
+        catch (SQLIntegrityConstraintViolationException e)
         {
-            //auditLogManager.createLog("Find Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
+            LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
         finally
@@ -105,22 +110,29 @@ public class GroupResource
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
             }
 
+            if(groupId == 1)
+                return Response.status(Response.Status.fromStatusCode(401)).entity("Can not edit default group.").build();
+
             groupManager = new GroupManager();
-            Group group = new Group();
 
             if(groupName != null)
-                group = groupManager.updateGroupName(groupId, groupName, securityContext.getUserPrincipal().toString());
+                groupManager.updateGroupName(groupId, groupName, securityContext.getUserPrincipal().toString());
 
             if(groupOwner != null)
-                group = groupManager.updateGroupOwner(groupId, groupOwner, securityContext.getUserPrincipal().toString());
+                groupManager.updateGroupOwner(groupId, groupOwner, securityContext.getUserPrincipal().toString());
 
             //auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(), group.toString(),"SUCCESS");
 
             return Response.ok().entity(groupManager).build();
         }
-        catch (Exception e)
+        catch (MissingParameterException e)
         {
-            //auditLogManager.createLog("Update Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
+            LOGGER.debug("Missing Parameter Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
+        catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
         finally
@@ -145,7 +157,7 @@ public class GroupResource
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
-            if(group.getGroupName() == "default_group")
+            if(group.getGroupName().equalsIgnoreCase("default_group"))
             {
                 //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL: Permissions");
                 return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default group.").build();
@@ -157,9 +169,9 @@ public class GroupResource
 
             return Response.ok().entity(groupManager).build();
         }
-        catch (Exception e)
+        catch (SQLIntegrityConstraintViolationException e)
         {
-            //auditLogManager.createLog("Delete Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
+            LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
         finally

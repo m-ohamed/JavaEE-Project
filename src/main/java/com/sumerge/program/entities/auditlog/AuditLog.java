@@ -3,7 +3,6 @@ package com.sumerge.program.entities.auditlog;
 
 
 import javax.persistence.*;
-import java.util.Date;
 
 @Entity
 @Table(name = "auditlog")
@@ -26,17 +25,17 @@ public class AuditLog
     @Column(name = "ENTITY_DETAILS", nullable = false)
     private String entityDetails;
 
-    @Column(name = "ACTION_STATUS", nullable = false)
-    private String actionStatus;
+    @Column(name = "ACTION_IDENTIFIER", nullable = false)
+    private String actionIdentifier;
 
     public AuditLog(){}
 
-    public AuditLog(String actionName, String actionTime, String actionAuthor, String entityDetails, String actionStatus) {
+    public AuditLog(String actionName, String actionTime, String actionAuthor, String entityDetails, String actionIdentifier) {
         this.actionName = actionName;
         this.actionTime = actionTime;
         this.actionAuthor = actionAuthor;
         this.entityDetails = entityDetails;
-        this.actionStatus = actionStatus;
+        this.actionIdentifier = actionIdentifier;
     }
 
     public int getId() {
@@ -79,11 +78,11 @@ public class AuditLog
         this.entityDetails = entityDetails;
     }
 
-    public String getActionStatus() {
-        return actionStatus;
+    public String getActionIdentifier() {
+        return actionIdentifier;
     }
 
-    public void setActionStatus(String actionStatus) {
-        this.actionStatus = actionStatus;
+    public void setActionIdentifier(String actionIdentifier) {
+        this.actionIdentifier = actionIdentifier;
     }
 }

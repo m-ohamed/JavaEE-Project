@@ -5,13 +5,18 @@ import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.user.User;
 import com.sumerge.program.entities.user.UserManager;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import com.sumerge.program.exceptions.MissingParameterException;
+import com.sumerge.program.exceptions.WrongPasswordException;
 import org.apache.log4j.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -64,9 +69,15 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch (Exception e)
+		catch (MissingParameterException e)
 		{
 			//auditLogManager.createLog("Create User", securityContext.getUserPrincipal().toString(),"N/A","FAILED");
+			LOGGER.debug("Missing Parameter Exception.");
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+		catch(SQLIntegrityConstraintViolationException e)
+		{
+			LOGGER.debug("SQL Constraint Violation Exception.");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 		finally 
@@ -111,10 +122,10 @@ public class UserResource
 
 			return Response.ok().entity(user.toString()).build();
 		}
-		catch(Exception e)
+		catch(NoResultException e)
 		{
 			//auditLogManager.createLog("Find User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			System.out.println(e.getStackTrace());
+			LOGGER.debug("No Result Exception.");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 		finally
@@ -130,8 +141,7 @@ public class UserResource
 							   @QueryParam("currentPassword") String currentPassword,
 							   @QueryParam("newPassword") String newPassword, @QueryParam("role") String role)
 	{
-		if(LOGGER.isDebugEnabled())
-			LOGGER.debug("Entering update user REST method.");
+		//LOGGER.debug("Entering update user REST method.");
 
 		//auditLogManager = new AuditLogManager();
 
@@ -172,12 +182,22 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
+		catch(MissingParameterException e)
 		{
 			//auditLogManager.createLog("Update User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
+			LOGGER.debug("Missing Parameter Exception.");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
-		finally
+		catch(WrongPasswordException e)
+		{
+			LOGGER.debug("Wrong Password Exception.");
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
+		catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        } finally
 		{
 			LOGGER.debug("Leaving update user REST method.");
 		}
@@ -212,11 +232,11 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
-		{
-			//auditLogManager.createLog("Move User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
-		}
+		catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
 		finally
 		{
 			LOGGER.debug("Leaving move user REST method.");
@@ -245,11 +265,11 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
-		{
-			//auditLogManager.createLog("Add User To Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
-		}
+		catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
 		finally
 		{
 			LOGGER.debug("Leaving add user to group REST method.");
@@ -285,11 +305,11 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
-		{
-			//auditLogManager.createLog("Remove User From Group", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
-		}
+		catch (SQLIntegrityConstraintViolationException e)
+        {
+            LOGGER.debug("SQL Constraint Violation Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
 		finally
 		{
 			LOGGER.debug("Leaving remove user from group REST method.");
@@ -319,11 +339,11 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
-		{
-			//auditLogManager.createLog("Restore User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
-		}
+		catch (NoResultException e)
+        {
+            LOGGER.debug("No Result Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+        }
 		finally
 		{
 			LOGGER.debug("Leaving restore user REST method.");
@@ -358,55 +378,14 @@ public class UserResource
 
 			return Response.ok().entity(userManager).build();
 		}
-		catch(Exception e)
+		catch(NoResultException e)
 		{
-			//auditLogManager.createLog("Delete User", securityContext.getUserPrincipal().toString(),"N/A","FAIL");
-			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+            LOGGER.debug("No Result Exception.");
+            return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
 		finally
 		{
 			LOGGER.debug("Leaving delete user REST method.");
 		}
 	}
-
-
-
-	/*
-    private static final Logger LOGGER = Logger.getLogger(UserResource.class.getName());
-
-    @Context
-    private SecurityContext securityContext;
-
-    @EJB
-    private UserRepository repo;
-
-    @GET
-    @Produces(APPLICATION_JSON)
-    public Response get() {
-		//LOGGER.debug("Entering get with user " + securityContext.getUserPrincipal().toString());
-		try {
-			return Response.ok().
-					entity(repo.getAllUsers()).
-					build();
-		} catch (Exception e) {
-			return Response.serverError().
-					entity(e).
-					build();
-		}
-    }
-
-    @POST
-    @Consumes(APPLICATION_JSON)
-    public Response post(UserOLD userOLD) {
-        //LOGGER.debug("Entering post with userOLD " + securityContext.getUserPrincipal().toString());
-		try {
-			repo.addUser(userOLD);
-			return Response.ok().
-					build();
-		} catch (Exception e) {
-			return Response.serverError().
-					entity(e.getMessage()).
-					build();
-		}
-    }*/
 }

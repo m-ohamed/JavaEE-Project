@@ -2,11 +2,14 @@ package com.sumerge.program.entities.group;
 
 import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.user.User;
+import com.sumerge.program.entities.user.UserManager;
+import com.sumerge.program.exceptions.MissingParameterException;
 import org.apache.log4j.Logger;
 
 import javax.ejb.Stateless;
 import javax.persistence.*;
 import javax.transaction.Transactional;
+import java.sql.SQLIntegrityConstraintViolationException;
 
 @Stateless
 public class GroupManager
@@ -19,8 +22,7 @@ public class GroupManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    @Transactional(rollbackOn = Exception.class)
-    public Group createGroup(int ownerUid, String groupName, String actionAuthor)
+    public Group createGroup(int ownerUid, String groupName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
     {
         auditLogManager = new AuditLogManager();
 
@@ -29,11 +31,26 @@ public class GroupManager
         em.getTransaction().begin();
 
         Group group = new Group();
-        group.setGroupName(groupName);
-        User user = em.find(User.class, ownerUid);
-        group.setOwnerUid(user);
 
-        auditLogManager.createLog("Create Group",actionAuthor,group,"SUCCESS");
+        if(groupName == null)
+        {
+            em.getTransaction().rollback();
+            throw new MissingParameterException("Group name can not be null!");
+        }
+        else
+            group.setGroupName(groupName);
+
+        User user = em.find(User.class, ownerUid);
+
+        if(user == null)
+        {
+            em.getTransaction().rollback();
+            throw new SQLIntegrityConstraintViolationException("User not found!");
+        }
+        else
+            group.setOwnerUid(user);
+
+        auditLogManager.createLog("Create Group",actionAuthor,group,""+group.getGroupId());
 
         em.persist(group);
         em.getTransaction().commit();
@@ -42,21 +59,22 @@ public class GroupManager
         return group;
     }
 
-    @Transactional(rollbackOn = Exception.class)
-    public Group getGroupById(int groupId)
+    public Group getGroupById(int groupId) throws SQLIntegrityConstraintViolationException
     {
         //LOGGER.debug("Entering get group by ID method.");
 
         EntityManager em = emf.createEntityManager();
         Group group = em.find(Group.class, groupId);
 
+        if(group == null)
+            throw new SQLIntegrityConstraintViolationException("Group not found!");
+
         LOGGER.debug("Leaving get group by ID method.");
 
         return group;
     }
 
-    @Transactional(rollbackOn = Exception.class)
-    public Group updateGroupName(int groupId, String groupName, String actionAuthor)
+    public Group updateGroupName(int groupId, String groupName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
     {
         //LOGGER.debug("Entering update group name method.");
         auditLogManager = new AuditLogManager();
@@ -64,9 +82,16 @@ public class GroupManager
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         Group group = getGroupById(groupId);
-        group.setGroupName(groupName);
 
-        auditLogManager.createLog("Update Group",actionAuthor,group,"SUCCESS");
+        if(groupName == null)
+        {
+            em.getTransaction().rollback();
+            throw new MissingParameterException("Group name can not be null!");
+        }
+        else
+            group.setGroupName(groupName);
+
+        auditLogManager.createLog("Update Group",actionAuthor,group,""+group.getGroupId());
 
         em.merge(group);
         em.getTransaction().commit();
@@ -76,8 +101,7 @@ public class GroupManager
         return group;
     }
 
-    @Transactional(rollbackOn = Exception.class)
-    public Group updateGroupOwner(int groupId, int ownerUid, String actionAuthor)
+    public Group updateGroupOwner(int groupId, int ownerUid, String actionAuthor) throws SQLIntegrityConstraintViolationException
     {
         //LOGGER.debug("Entering update group owner method.");
 
@@ -85,11 +109,15 @@ public class GroupManager
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
+
         Group group = getGroupById(groupId);
-        User user = em.find(User.class, ownerUid);
+
+        UserManager userManager = new UserManager();
+        User user = userManager.getUserById(ownerUid, true);
+
         group.setOwnerUid(user);
 
-        auditLogManager.createLog("Update Group",actionAuthor,group,"SUCCESS");
+        auditLogManager.createLog("Update Group",actionAuthor,group,""+group.getGroupId());
 
         em.merge(group);
         em.getTransaction().commit();
@@ -99,8 +127,7 @@ public class GroupManager
         return group;
     }
 
-    @Transactional(rollbackOn = Exception.class)
-    public void deleteGroup(int groupId, String actionAuthor)
+    public void deleteGroup(int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException
     {
         //LOGGER.debug("Entering delete group method.");
 
@@ -108,15 +135,13 @@ public class GroupManager
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        Group group = em.find(Group.class, groupId);
-        System.out.println(group.toString());
+        Group group = getGroupById(groupId);
 
         if(!em.contains(group))
             group = em.merge(group);
 
-        auditLogManager.createLog("Delete Group",actionAuthor,group,"SUCCESS");
+        auditLogManager.createLog("Delete Group",actionAuthor,group,""+group.getGroupId());
 
-        //em.merge(group);
         em.remove(group);
 
         em.getTransaction().commit();
