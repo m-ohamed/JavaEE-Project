@@ -329,12 +329,15 @@ public class UserManager
         return user;
     }
 
-    public void addUser(String username, int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException
+    public void addUser(String username, int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException, MissingParameterException
     {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
+
+        if(groupId == 0)
+            throw new MissingParameterException("Group ID can not be empty or 0.");
 
         GroupManager groupManager = new GroupManager();
         User user = getUserByUsername(username);
@@ -350,12 +353,15 @@ public class UserManager
         LOGGER.debug("Leaving add user to group method.");
     }
 
-    public User removeUser(String username, int groupId, String actionAuthor)
+    public User removeUser(String username, int groupId, String actionAuthor) throws MissingParameterException
     {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
+
+        if(groupId == 0)
+            throw new MissingParameterException("Group ID can not be empty or 0.");
 
         User user = getUserByUsername(username);
 
@@ -378,13 +384,13 @@ public class UserManager
         return user;
     }
 
-    public User restoreDeleteUser(int userId, int flag, String actionAuthor)
+    public User restoreDeleteUser(String username, int flag, String actionAuthor)
     {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
-        User user = getUserById(userId,true);
+        User user = getUserByUsername(username);
 
         if(flag == 1)
         {
