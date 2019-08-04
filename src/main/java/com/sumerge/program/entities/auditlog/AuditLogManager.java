@@ -18,7 +18,7 @@ public class AuditLogManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    public void createLog(String actionName, String actionAuthor, Object entityDetails, String actionStatus)
+    public void createLog(String actionName, String actionAuthor, Object entityDetails, String actionIdentifier)
     {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -39,7 +39,7 @@ public class AuditLogManager
             e.printStackTrace();
         }
 
-        auditLog.setActionStatus(actionStatus);
+        auditLog.setActionIdentifier(actionIdentifier);
 
         em.persist(auditLog);
         em.getTransaction().commit();

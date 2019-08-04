@@ -2,7 +2,7 @@ CREATE SCHEMA projdb;
 
 CREATE TABLE projdb.USERS (
                                   UID int not null primary key AUTO_INCREMENT,
-                                  USERNAME varchar(15) not null,
+                                  USERNAME varchar(15) not null unique,
                                   FIRST_NAME varchar(20),
                                   LAST_NAME varchar(20),
                                   EMAIL varchar(40),
