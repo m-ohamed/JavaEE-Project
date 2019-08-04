@@ -14,8 +14,6 @@ import java.sql.SQLIntegrityConstraintViolationException;
 @Stateless
 public class GroupManager
 {
-    //@PersistenceContext(unitName = "MyPU", type = PersistenceContextType.TRANSACTION)
-    //EntityManager em;
     private static final Logger LOGGER = Logger.getLogger(GroupManager.class.getName());
     private AuditLogManager auditLogManager;
 
@@ -26,7 +24,6 @@ public class GroupManager
     {
         auditLogManager = new AuditLogManager();
 
-        //LOGGER.debug("Entering create group method.");
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
@@ -61,8 +58,6 @@ public class GroupManager
 
     public Group getGroupById(int groupId) throws SQLIntegrityConstraintViolationException
     {
-        //LOGGER.debug("Entering get group by ID method.");
-
         EntityManager em = emf.createEntityManager();
         Group group = em.find(Group.class, groupId);
 
@@ -76,7 +71,6 @@ public class GroupManager
 
     public Group updateGroupName(int groupId, String groupName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
     {
-        //LOGGER.debug("Entering update group name method.");
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -103,8 +97,6 @@ public class GroupManager
 
     public Group updateGroupOwner(int groupId, int ownerUid, String actionAuthor) throws SQLIntegrityConstraintViolationException
     {
-        //LOGGER.debug("Entering update group owner method.");
-
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -129,8 +121,6 @@ public class GroupManager
 
     public void deleteGroup(int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException
     {
-        //LOGGER.debug("Entering delete group method.");
-
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();

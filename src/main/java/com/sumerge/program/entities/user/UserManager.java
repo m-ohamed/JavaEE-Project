@@ -5,6 +5,7 @@ import com.sumerge.program.entities.auditlog.AuditLogManager;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
 import com.sumerge.program.exceptions.MissingParameterException;
+import com.sumerge.program.exceptions.UsernameAlreadyExistsException;
 import com.sumerge.program.exceptions.WrongPasswordException;
 import org.apache.log4j.Logger;
 import org.eclipse.persistence.jpa.jpql.parser.DateTime;
@@ -27,9 +28,6 @@ import javax.transaction.Transactional;
 @Stateless
 public class UserManager
 {
-    //@PersistenceContext(unitName = "MyPU", type = PersistenceContextType.TRANSACTION)
-    //EntityManager em;
-
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
@@ -37,22 +35,33 @@ public class UserManager
 
     private AuditLogManager auditLogManager;
 
-    public User createUser(String username, String firstName, String lastName, String email, String password, String role, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
+    public User createUser(String username, String firstName, String lastName, String email, String password, String role, String actionAuthor) throws MissingParameterException, UsernameAlreadyExistsException, NoResultException
     {
-        //LOGGER.debug("Entering create user method.");
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
 
         User user = new User();
+
         if(username == null)
         {
             em.getTransaction().rollback();
             throw new MissingParameterException("Username can not be null!");
         }
         else
-            user.setUsername(username);
+        {
+
+            //Username check not working
+            if(getUserByUsername(username) != null)
+            {
+                em.getTransaction().rollback();
+                throw new UsernameAlreadyExistsException("Username already exists!");
+            }
+            else
+                user.setUsername(username);
+
+        }
 
         if(firstName == null)
         {
@@ -117,8 +126,6 @@ public class UserManager
 
     public List<User> getAllUsers(boolean isAdmin)
     {
-        //LOGGER.debug("Entering get all users method.");
-
         EntityManager em = emf.createEntityManager();
 
         List<User> usersList;
@@ -135,8 +142,6 @@ public class UserManager
 
     public User getUserById(int userId, boolean isAdmin) throws NoResultException
     {
-        //LOGGER.debug("Entering get user by ID method.");
-
         EntityManager em = emf.createEntityManager();
 
         User user;
@@ -146,38 +151,36 @@ public class UserManager
         else
             user = em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
 
-        if(user == null)
-        {
-            em.getTransaction().rollback();
-            throw new NoResultException("User not found!");
-        }
+//        if(user == null)
+//        {
+//            //em.getTransaction().rollback();
+//            throw new NoResultException("User not found!");
+//        }
 
         LOGGER.debug("Leaving get user by ID method.");
 
         return user;
     }
 
-    public User getUserByUsername(String username) throws SQLIntegrityConstraintViolationException
+    public User getUserByUsername(String username) throws NoResultException
     {
-        //LOGGER.debug("Entering get user by username method.");
-
         EntityManager em = emf.createEntityManager();
 
         User user = em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
 
-        if(user == null)
-        {
-            em.getTransaction().rollback();
-            throw new SQLIntegrityConstraintViolationException("User not found!");
-        }
+//        if(user == null)
+//        {
+//            //em.getTransaction().rollback();
+//            throw new SQLIntegrityConstraintViolationException("User not found!");
+//        }
 
         LOGGER.debug("Leaving get user by username method.");
 
         return user;
     }
 
-    public User updateUserFirstName(String username, String firstName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering update user first name method.");
+    public User updateUserFirstName(String username, String firstName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
+    {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -203,8 +206,8 @@ public class UserManager
         return user;
     }
 
-    public User updateUserLastName(String username, String lastName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering update user last name method.");
+    public User updateUserLastName(String username, String lastName, String actionAuthor) throws MissingParameterException
+    {
 
         auditLogManager = new AuditLogManager();
 
@@ -230,9 +233,8 @@ public class UserManager
         return user;
     }
 
-    public User updateUserEmail(String username, String email, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering update user email method.");
-
+    public User updateUserEmail(String username, String email, String actionAuthor) throws MissingParameterException
+    {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -257,9 +259,8 @@ public class UserManager
         return user;
     }
 
-    public User updateUserPassword(String username, String currentPassword, String newPassword, String actionAuthor) throws MissingParameterException, WrongPasswordException, SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering update user password method.");
-
+    public User updateUserPassword(String username, String currentPassword, String newPassword, String actionAuthor) throws MissingParameterException, WrongPasswordException
+    {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -284,7 +285,7 @@ public class UserManager
             e.printStackTrace();
         }
 
-        if(user.getPassword() == currentHashedPassword)
+        if(user.getPassword().equals(currentHashedPassword))
             user.setPassword(newHashedPassword);
         else
         {
@@ -302,9 +303,8 @@ public class UserManager
         return user;
     }
 
-    public User updateUserRole(String username, String role, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering update user role method.");
-
+    public User updateUserRole(String username, String role, String actionAuthor) throws MissingParameterException
+    {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -331,8 +331,6 @@ public class UserManager
 
     public void addUser(String username, int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException
     {
-        //LOGGER.debug("Entering add user to group method.");
-
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -352,9 +350,8 @@ public class UserManager
         LOGGER.debug("Leaving add user to group method.");
     }
 
-    public User removeUser(String username, int groupId, String actionAuthor) throws SQLIntegrityConstraintViolationException {
-        //LOGGER.debug("Entering remove user from group method.");
-
+    public User removeUser(String username, int groupId, String actionAuthor)
+    {
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -383,8 +380,6 @@ public class UserManager
 
     public User restoreDeleteUser(int userId, int flag, String actionAuthor)
     {
-        //LOGGER.debug("Entering restore/delete user method.");
-
         auditLogManager = new AuditLogManager();
 
         EntityManager em = emf.createEntityManager();
@@ -409,9 +404,8 @@ public class UserManager
         return user;
     }
 
-    public static String sha256(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException {
-        //LOGGER.debug("Entering hashing method.");
-
+    public static String sha256(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException
+    {
         MessageDigest md5 = MessageDigest.getInstance("SHA-256");
         byte[] digest = md5.digest(input.getBytes("UTF-8"));
         StringBuilder sb = new StringBuilder();
