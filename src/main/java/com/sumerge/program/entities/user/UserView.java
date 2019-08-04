@@ -11,6 +11,8 @@ public class UserView
     private String lastName;
     private String email;
 
+    public UserView(){}
+
     public UserView(String username, String firstName, String lastName, String email) {
         this.username = username;
         this.firstName = firstName;

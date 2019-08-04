@@ -71,7 +71,8 @@ public class UserTests
     {
         Client client = ClientBuilder.newBuilder().register(String.class).build();
 
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(newUser.getUsername(), newUser.getPassword());
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("user", "user");
+
         Response response = client.target("http://localhost:8880/user").path("create")
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
@@ -86,10 +87,9 @@ public class UserTests
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
                 .post(Entity.entity(newUser,MediaType.APPLICATION_JSON_TYPE));
-
         assertEquals(500, response.getStatus());
 
-        newUser.setEmail("newEmail");
+        newUser.setEmail("New Email");
         response = client.target("http://localhost:8880/user/create/")
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)

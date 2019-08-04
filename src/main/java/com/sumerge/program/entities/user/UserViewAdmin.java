@@ -15,6 +15,8 @@ public class UserViewAdmin
     private boolean isDeleted;
     private List<Group> groups = new ArrayList<>();
 
+    public UserViewAdmin(){}
+
     public UserViewAdmin(String username, String firstName, String lastName, String email, String role, boolean isDeleted, List<Group> groups) {
         this.username = username;
         this.firstName = firstName;
