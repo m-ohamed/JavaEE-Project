@@ -53,17 +53,6 @@ public class UserTests
                 .request(MediaType.APPLICATION_JSON)
                 .get();
         assertEquals(500,response.getStatus());
-
-//        Invocation.Builder invocationBuilder =  client.target("http://localhost:8880/user/find/1").register(JacksonJsonProvider.class);
-//        Response response = invocationBuilder.get();
-
-//        User user = response.readEntity(User.class);
-
-//        System.out.println(response.getStatus());
-//        System.out.println(user.toString());
-        //System.out.println(response.readEntity(User.class));
-        //System.out.println(target);
-        //assertTrue("Test Failed", target.size() > 0);
     }
 
     @Test
@@ -156,10 +145,7 @@ public class UserTests
                 .queryParam("currentPassword","user").queryParam("newPassword","useruser")
                 .register(feature).register(JacksonJsonProvider.class).request(MediaType.APPLICATION_JSON)
                 .put(null);
-        //user = response.readEntity(User.class);
-        //System.out.println(user.getPassword());
         assertEquals(200, response.getStatus());
-//        assertEquals("e172c5654dbc12d78ce1850a4f7956ba6e5a3d2ac40f0925fc6d691ebb54f6bf", user.getPassword());
 
 
         feature = HttpAuthenticationFeature.basic("testingUser", "user");
@@ -176,10 +162,6 @@ public class UserTests
                 .register(feature).register(JacksonJsonProvider.class).request(MediaType.APPLICATION_JSON)
                 .put(null);
         assertEquals(200, response.getStatus());
-
-//        user = response.readEntity(User.class);
-
-//        assertEquals("04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb", user.getPassword());
     }
 
     @Test
@@ -201,22 +183,6 @@ public class UserTests
                 .put(null);
         assertEquals(200, response.getStatus());
         User user = response.readEntity(User.class);
-//        GroupManager groupManager = new GroupManager();
-//        Group group = groupManager.getGroupById(1);
-//
-//        List<User> usersList = group.getUsers();
-//
-//        boolean flag = false;
-//        for(User u:usersList)
-//        {
-//            if(u.getUsername() == user.getUsername())
-//            {
-//                flag = true;
-//                break;
-//            }
-//        }
-//        System.out.println(flag);
-//        assertTrue(flag);
     }
 
     @Test

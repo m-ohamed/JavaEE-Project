@@ -26,13 +26,6 @@ public class GroupTests
 {
 
     private static GroupViewRegistration newGroup;
-//    static Group testGroup;
-//
-//    @BeforeClass
-//    public static void init()
-//    {
-//        testGroup = new Group("Test",);
-//    }
 
     @BeforeClass
     public static void init()
@@ -141,12 +134,6 @@ public class GroupTests
                 .request(MediaType.APPLICATION_JSON)
                 .delete();
         assertEquals(200,response.getStatus());
-
-//        Response response2 = client.target("http://localhost:8880/group").path("find").path("18")
-//                .register(feature).register(JacksonJsonProvider.class)
-//                .request(MediaType.APPLICATION_JSON)
-//                .get();
-//        assertNull(response2.readEntity(Group.class));
     }
 
 }

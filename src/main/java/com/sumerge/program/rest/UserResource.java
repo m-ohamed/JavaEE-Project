@@ -35,10 +35,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 @Path("user")
 public class UserResource
 {
-
-	//Improve add/delete user method?
-	//Finding user as a user needs fixing
-
 	private static final Logger LOGGER = Logger.getLogger(UserResource.class.getName());
 
 	@Context
@@ -47,23 +43,17 @@ public class UserResource
 	@EJB
 	private UserManager userManager;
 
-
-	//	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
-//							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
-//							   @QueryParam("password") String password, @QueryParam("role") String role)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@POST
 	@Path("/create/")
 	public Response createUser(UserViewRegistration user)
 	{
-		System.out.println("test!");
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-//			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
 			userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
 
 			return Response.ok().entity(userManager).build();

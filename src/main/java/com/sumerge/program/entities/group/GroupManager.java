@@ -40,8 +40,6 @@ public class GroupManager
         UserManager userManager = new UserManager();
         User user = userManager.getUserByUsername(ownerUsername);
 
-        System.out.println(user.toString());
-
         if(user == null)
         {
             em.getTransaction().rollback();

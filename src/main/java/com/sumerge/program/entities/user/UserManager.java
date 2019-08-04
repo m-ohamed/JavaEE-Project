@@ -51,16 +51,7 @@ public class UserManager
         }
         else
         {
-
-            //Username check not working
-//            if(getUserByUsername(username) != null)
-//            {
-//                em.getTransaction().rollback();
-//                throw new UsernameAlreadyExistsException("Username already exists!");
-            //}
-            //else
-                user.setUsername(username);
-
+            user.setUsername(username);
         }
 
         if(firstName == null)
@@ -87,22 +78,25 @@ public class UserManager
         else
             user.setEmail(email);
 
-        String hashedPassword = null;
-        try {
-            hashedPassword = sha256(password);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
 
-        if(hashedPassword == null)
+
+        if(password == null)
         {
             em.getTransaction().rollback();
             throw new MissingParameterException("Password can not be null!");
         }
         else
+        {
+            String hashedPassword = null;
+            try {
+                hashedPassword = sha256(password);
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
             user.setPassword(hashedPassword);
+        }
 
         if(role == null)
         {
@@ -151,12 +145,6 @@ public class UserManager
         else
             user = em.createNamedQuery("User.find", User.class).setParameter("userId",userId).getSingleResult();
 
-//        if(user == null)
-//        {
-//            //em.getTransaction().rollback();
-//            throw new NoResultException("User not found!");
-//        }
-
         LOGGER.debug("Leaving get user by ID method.");
 
         return user;
@@ -167,12 +155,6 @@ public class UserManager
         EntityManager em = emf.createEntityManager();
 
         User user = em.createNamedQuery("User.UsernameGet", User.class).setParameter("username",username).getSingleResult();
-
-//        if(user == null)
-//        {
-//            //em.getTransaction().rollback();
-//            throw new SQLIntegrityConstraintViolationException("User not found!");
-//        }
 
         LOGGER.debug("Leaving get user by username method.");
 
