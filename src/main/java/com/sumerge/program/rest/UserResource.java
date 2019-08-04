@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import com.sumerge.program.entities.user.UserViewRegistration;
 import com.sumerge.program.exceptions.MissingParameterException;
 import com.sumerge.program.exceptions.UsernameAlreadyExistsException;
 import com.sumerge.program.exceptions.WrongPasswordException;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
+import javax.sound.midi.SysexMessage;
 import javax.validation.constraints.Null;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -46,29 +48,23 @@ public class UserResource
 	private UserManager userManager;
 
 
+	//	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
+//							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
+//							   @QueryParam("password") String password, @QueryParam("role") String role)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@POST
-	@Path("create")
-	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
-							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
-							   @QueryParam("password") String password, @QueryParam("role") String role)
-//	public Response createUser(User user)
+	@Path("/create/")
+	public Response createUser(UserViewRegistration user)
 	{
+		System.out.println("test!");
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
-//			System.out.println(user.toString());
-//			System.out.println(securityContext.getUserPrincipal().toString());
-//			System.out.println(user.getUsername());
-//			System.out.println(user.getFirstName());
-//			System.out.println(user.getLastName());
-//			System.out.println(user.getEmail());
-//			System.out.println(user.getPassword());
-//			System.out.println(user.getRole());
-			//userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
+//			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
+			userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -111,7 +107,7 @@ public class UserResource
 			userManager = new UserManager();
 			User user = userManager.getUserById(userId, securityContext.isUserInRole("admin"));
 
-			return Response.ok().entity(user.toString()).build();
+			return Response.ok().entity(user).build();
 		}
 		catch(NoResultException e)
 		{
@@ -135,6 +131,8 @@ public class UserResource
 		{
 			userManager = new UserManager();
 
+			User user = new User();
+
 			if(!securityContext.isUserInRole("admin") && !username.equalsIgnoreCase(securityContext.getUserPrincipal().toString()))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You do not have permissions to do this action.").build();
 
@@ -142,21 +140,21 @@ public class UserResource
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not edit the default administrator.").build();
 
 			if(firstName != null)
-				userManager.updateUserFirstName(username, firstName, securityContext.getUserPrincipal().toString());
+				user = userManager.updateUserFirstName(username, firstName, securityContext.getUserPrincipal().toString());
 
 			if(lastName != null)
-				userManager.updateUserLastName(username, lastName, securityContext.getUserPrincipal().toString());
+				user = userManager.updateUserLastName(username, lastName, securityContext.getUserPrincipal().toString());
 
 			if(email != null)
-				userManager.updateUserEmail(username, email, securityContext.getUserPrincipal().toString());
+				user = userManager.updateUserEmail(username, email, securityContext.getUserPrincipal().toString());
 
 			if(currentPassword != null)
-				userManager.updateUserPassword(username, currentPassword, newPassword, securityContext.getUserPrincipal().toString());
+				user = userManager.updateUserPassword(username, currentPassword, newPassword, securityContext.getUserPrincipal().toString());
 
 			if(role != null && securityContext.isUserInRole("admin"))
-				userManager.updateUserRole(username, role, securityContext.getUserPrincipal().toString());
+				user = userManager.updateUserRole(username, role, securityContext.getUserPrincipal().toString());
 
-			return Response.ok().entity(userManager).build();
+			return Response.ok().entity(user).build();
 		}
 		catch(MissingParameterException e)
 		{
@@ -201,6 +199,11 @@ public class UserResource
             LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+		catch (MissingParameterException e)
+		{
+			LOGGER.debug("Missing Parameter Exception.");
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
 		finally
 		{
 			LOGGER.debug("Leaving move user REST method.");
@@ -226,6 +229,11 @@ public class UserResource
             LOGGER.debug("SQL Constraint Violation Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+		catch (MissingParameterException e)
+		{
+			LOGGER.debug("Missing Parameter Exception.");
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
 		finally
 		{
 			LOGGER.debug("Leaving add user to group REST method.");
@@ -254,6 +262,11 @@ public class UserResource
             LOGGER.debug("No Result Exception.");
             return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
         }
+		catch (MissingParameterException e)
+		{
+			LOGGER.debug("Missing Parameter Exception.");
+			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
+		}
 		finally
 		{
 			LOGGER.debug("Leaving remove user from group REST method.");
@@ -261,8 +274,8 @@ public class UserResource
 	}
 
 	@PUT
-	@Path("restore/{userId}")
-	public Response restoreUser(@PathParam("userId")int userId)
+	@Path("restore/{username}")
+	public Response restoreUser(@PathParam("username")String username)
 	{
 		try
 		{
@@ -270,9 +283,9 @@ public class UserResource
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-			userManager.restoreDeleteUser(userId, 0, securityContext.getUserPrincipal().toString());
+			User user = userManager.restoreDeleteUser(username, 0, securityContext.getUserPrincipal().toString());
 
-			return Response.ok().entity(userManager).build();
+			return Response.ok().entity(user).build();
 		}
 		catch (NoResultException e)
         {
@@ -286,21 +299,21 @@ public class UserResource
 	}
 
 	@DELETE
-	@Path("delete/{userId}")
-	public Response deleteUser(@PathParam("userId")int userId)
+	@Path("delete/{username}")
+	public Response deleteUser(@PathParam("username")String username)
 	{
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
-			if(userId == 1)
+			if(username.equals("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("You can not delete the default administrator.").build();
 
 			userManager = new UserManager();
-			userManager.restoreDeleteUser(userId, 1, securityContext.getUserPrincipal().toString());
+			User user = userManager.restoreDeleteUser(username, 1, securityContext.getUserPrincipal().toString());
 
-			return Response.ok().entity(userManager).build();
+			return Response.ok().entity(user).build();
 		}
 		catch(NoResultException e)
 		{

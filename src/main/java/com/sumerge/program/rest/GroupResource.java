@@ -10,6 +10,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import com.sumerge.program.entities.group.GroupViewRegistration;
 import com.sumerge.program.exceptions.MissingParameterException;
 import org.apache.log4j.Logger;
 
@@ -33,7 +34,8 @@ public class GroupResource
 
     @POST
     @Path("create")
-    public Response createGroup(@QueryParam("ownerUid")int ownerUid, @QueryParam("groupName")String groupName)
+    @Consumes(APPLICATION_JSON)
+    public Response createGroup(GroupViewRegistration newGroup)
     {
         try
         {
@@ -41,9 +43,9 @@ public class GroupResource
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
             groupManager = new GroupManager();
-            groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
+            Group group = groupManager.createGroup(newGroup.getOwnerUsername(), newGroup.getGroupName(), securityContext.getUserPrincipal().toString());
 
-            return Response.ok().entity(groupManager).build();
+            return Response.ok().entity(group).build();
         }
         catch (MissingParameterException e)
         {
@@ -70,7 +72,7 @@ public class GroupResource
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
-            return Response.ok().entity(group.toString()).build();
+            return Response.ok().entity(group).build();
         }
         catch (SQLIntegrityConstraintViolationException e)
         {
@@ -96,14 +98,15 @@ public class GroupResource
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Can not edit default group.").build();
 
             groupManager = new GroupManager();
+            Group group = new Group();
 
             if(groupName != null)
-                groupManager.updateGroupName(groupId, groupName, securityContext.getUserPrincipal().toString());
+                group = groupManager.updateGroupName(groupId, groupName, securityContext.getUserPrincipal().toString());
 
             if(groupOwner != null)
-                groupManager.updateGroupOwner(groupId, groupOwner, securityContext.getUserPrincipal().toString());
+                group = groupManager.updateGroupOwner(groupId, groupOwner, securityContext.getUserPrincipal().toString());
 
-            return Response.ok().entity(groupManager).build();
+            return Response.ok().entity(group).build();
         }
         catch (MissingParameterException e)
         {

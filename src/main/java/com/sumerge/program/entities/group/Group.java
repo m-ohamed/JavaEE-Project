@@ -14,6 +14,7 @@ public class Group implements Serializable
 {
     @Id
     @Column(name = "GID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int groupId;
 
     @ManyToOne
