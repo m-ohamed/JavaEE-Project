@@ -53,12 +53,12 @@ public class UserManager
         {
 
             //Username check not working
-            if(getUserByUsername(username) != null)
-            {
-                em.getTransaction().rollback();
-                throw new UsernameAlreadyExistsException("Username already exists!");
-            }
-            else
+//            if(getUserByUsername(username) != null)
+//            {
+//                em.getTransaction().rollback();
+//                throw new UsernameAlreadyExistsException("Username already exists!");
+            //}
+            //else
                 user.setUsername(username);
 
         }

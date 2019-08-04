@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
+import javax.validation.constraints.Null;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -44,13 +45,14 @@ public class UserResource
 	@EJB
 	private UserManager userManager;
 
+
 	@POST
 	@Path("create")
 	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
 							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
 							   @QueryParam("password") String password, @QueryParam("role") String role)
+//	public Response createUser(User user)
 	{
-
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
@@ -58,6 +60,15 @@ public class UserResource
 
 			userManager = new UserManager();
 			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
+//			System.out.println(user.toString());
+//			System.out.println(securityContext.getUserPrincipal().toString());
+//			System.out.println(user.getUsername());
+//			System.out.println(user.getFirstName());
+//			System.out.println(user.getLastName());
+//			System.out.println(user.getEmail());
+//			System.out.println(user.getPassword());
+//			System.out.println(user.getRole());
+			//userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
 
 			return Response.ok().entity(userManager).build();
 		}
@@ -71,7 +82,7 @@ public class UserResource
 			LOGGER.debug("Username Already Exists Exception.");
 			return Response.serverError().entity(e.getClass() + ": " + e.getMessage()).build();
 		}
-		finally 
+		finally
 		{
 			LOGGER.debug("Leaving create user REST method.");
 		}
