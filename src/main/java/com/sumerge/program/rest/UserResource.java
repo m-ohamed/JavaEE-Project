@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
+import com.sumerge.program.entities.user.UserViewRegistration;
 import com.sumerge.program.exceptions.MissingParameterException;
 import com.sumerge.program.exceptions.UsernameAlreadyExistsException;
 import com.sumerge.program.exceptions.WrongPasswordException;
@@ -18,6 +19,7 @@ import org.apache.log4j.Logger;
 import javax.ejb.EJB;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
+import javax.sound.midi.SysexMessage;
 import javax.validation.constraints.Null;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
@@ -46,29 +48,23 @@ public class UserResource
 	private UserManager userManager;
 
 
+	//	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
+//							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
+//							   @QueryParam("password") String password, @QueryParam("role") String role)
+	@Consumes(MediaType.APPLICATION_JSON)
 	@POST
-	@Path("create")
-	public Response createUser(@QueryParam("username") String username, @QueryParam("firstName") String firstName,
-							   @QueryParam("lastName") String lastName, @QueryParam("email") String email,
-							   @QueryParam("password") String password, @QueryParam("role") String role)
-//	public Response createUser(User user)
+	@Path("/create/")
+	public Response createUser(UserViewRegistration user)
 	{
+		System.out.println("test!");
 		try
 		{
 			if(!securityContext.isUserInRole("admin"))
 				return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
 			userManager = new UserManager();
-			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
-//			System.out.println(user.toString());
-//			System.out.println(securityContext.getUserPrincipal().toString());
-//			System.out.println(user.getUsername());
-//			System.out.println(user.getFirstName());
-//			System.out.println(user.getLastName());
-//			System.out.println(user.getEmail());
-//			System.out.println(user.getPassword());
-//			System.out.println(user.getRole());
-			//userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
+//			userManager.createUser(username, firstName, lastName, email, password, role, securityContext.getUserPrincipal().toString());
+			userManager.createUser(user.getUsername(), user.getFirstName(),user.getLastName(),user.getEmail(),user.getPassword(),user.getRole(),securityContext.getUserPrincipal().toString());
 
 			return Response.ok().entity(userManager).build();
 		}

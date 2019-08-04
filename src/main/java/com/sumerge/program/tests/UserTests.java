@@ -1,9 +1,14 @@
 package com.sumerge.program.tests;
 
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import javax.sound.midi.SysexMessage;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -11,8 +16,11 @@ import javax.ws.rs.core.Response;
 import com.sumerge.program.entities.group.Group;
 import com.sumerge.program.entities.group.GroupManager;
 import com.sumerge.program.entities.user.User;
+import com.sumerge.program.entities.user.UserViewRegistration;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 
@@ -20,25 +28,30 @@ import static org.junit.Assert.*;
 
 public class UserTests
 {
+    static UserViewRegistration newUser;
+
+    @BeforeClass
+    public static void init()
+    {
+        newUser = new UserViewRegistration("testUser1232",
+                "FirstTest","LastTest","first@last.com","user","user");
+    }
+
     @Test
     public void testCase01GetUser()
     {
         Client client = ClientBuilder.newBuilder().register(String.class).build();
-
         HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("admin", "admin");
-
         Response response = client.target("http://localhost:8880/user").path("find").path("1").register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
                 .get();
         User user = response.readEntity(User.class);
-
         assertEquals("admin",user.getUsername());
         assertEquals(200, response.getStatus());
 
         response = client.target("http://localhost:8880/user").path("find").path("100").register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
                 .get();
-
         assertEquals(500,response.getStatus());
 
 //        Invocation.Builder invocationBuilder =  client.target("http://localhost:8880/user/find/1").register(JacksonJsonProvider.class);
@@ -58,39 +71,29 @@ public class UserTests
     {
         Client client = ClientBuilder.newBuilder().register(String.class).build();
 
-        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic("user", "user");
-
+        HttpAuthenticationFeature feature = HttpAuthenticationFeature.basic(newUser.getUsername(), newUser.getPassword());
         Response response = client.target("http://localhost:8880/user").path("create")
-                .queryParam("username","testingUser").queryParam("firstName","First")
-                .queryParam("lastName","Last").queryParam("email","first@last.com")
-                .queryParam("password","user").queryParam("role","user")
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
-                .post(null);
+                .post(Entity.entity(newUser,MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(401,response.getStatus());
 
         feature = HttpAuthenticationFeature.basic("admin", "admin");
 
+        newUser.setEmail(null);
         response = client.target("http://localhost:8880/user").path("create")
-                .queryParam("username","testingUser").queryParam("firstName","First")
-                .queryParam("lastName","Last").queryParam("email","first@last.com")
-                .queryParam("password","user")
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
-                .post(null);
+                .post(Entity.entity(newUser,MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(500, response.getStatus());
 
-
-        response = client.target("http://localhost:8880/user").path("create")
-                .queryParam("username","testingUser").queryParam("firstName","First")
-                .queryParam("lastName","Last").queryParam("email","first@last.com")
-                .queryParam("password","user").queryParam("role","user")
+        newUser.setEmail("newEmail");
+        response = client.target("http://localhost:8880/user/create/")
                 .register(feature).register(JacksonJsonProvider.class)
                 .request(MediaType.APPLICATION_JSON)
-                .post(null);
-
+                .post(Entity.entity(newUser,MediaType.APPLICATION_JSON_TYPE));
         assertEquals(200, response.getStatus());
 
     }
@@ -311,5 +314,13 @@ public class UserTests
         assertEquals(200, response.getStatus());
         User user = response.readEntity(User.class);
         assertFalse(user.isDeleted());
+    }
+
+    public static String getDateTime()
+    {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+
+        return dateFormat.format(date);
     }
 }

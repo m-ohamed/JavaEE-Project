@@ -20,7 +20,7 @@ public class GroupManager
     @PersistenceUnit
     EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyPU");
 
-    public Group createGroup(int ownerUid, String groupName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
+    public Group createGroup(String ownerUsername, String groupName, String actionAuthor) throws MissingParameterException, SQLIntegrityConstraintViolationException
     {
         auditLogManager = new AuditLogManager();
 
@@ -37,7 +37,10 @@ public class GroupManager
         else
             group.setGroupName(groupName);
 
-        User user = em.find(User.class, ownerUid);
+        UserManager userManager = new UserManager();
+        User user = userManager.getUserByUsername(ownerUsername);
+
+        System.out.println(user.toString());
 
         if(user == null)
         {

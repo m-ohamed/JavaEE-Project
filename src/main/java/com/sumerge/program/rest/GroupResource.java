@@ -33,7 +33,7 @@ public class GroupResource
 
     @POST
     @Path("create")
-    public Response createGroup(@QueryParam("ownerUid")int ownerUid, @QueryParam("groupName")String groupName)
+    public Response createGroup(@QueryParam("ownerUsername")String ownerUsername, @QueryParam("groupName")String groupName)
     {
         try
         {
@@ -41,9 +41,9 @@ public class GroupResource
                 return Response.status(Response.Status.fromStatusCode(401)).entity("Only available for administrators.").build();
 
             groupManager = new GroupManager();
-            groupManager.createGroup(ownerUid, groupName, securityContext.getUserPrincipal().toString());
+            Group group = groupManager.createGroup(ownerUsername, groupName, securityContext.getUserPrincipal().toString());
 
-            return Response.ok().entity(groupManager).build();
+            return Response.ok().entity(group).build();
         }
         catch (MissingParameterException e)
         {
@@ -70,7 +70,7 @@ public class GroupResource
             groupManager = new GroupManager();
             Group group = groupManager.getGroupById(groupId);
 
-            return Response.ok().entity(group.toString()).build();
+            return Response.ok().entity(group).build();
         }
         catch (SQLIntegrityConstraintViolationException e)
         {
